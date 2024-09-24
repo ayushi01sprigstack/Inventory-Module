@@ -23,7 +23,7 @@
   flex-direction: column;
   margin-left: 250px;
 }
-.topmenu-wrapper {
+.topmenu-container {
   height: 70px;
   background-color: #303260;
   display: flex;
@@ -33,7 +33,39 @@
 }
 .content-wrapper {
   flex-grow: 1;
-  padding: 20px;
+  /* padding: 20px; */
   background-color: #03053d;
   overflow-y: auto;
+}
+.side-menu-logo {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #303260;
+}
+.topmenu-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #2e3361;
+  width: 100%;
+}
+.search-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+}
+.searchInput {
+  padding-left: 45px !important;
+  background-color: white !important;
+}
+.side-menu .nav-pills .nav-link.active, .nav-pills .show>.nav-link{
+  background-color: #8b98b1;
+  width: 100%;
+}
+.side-menu-icon{
+  width: 23px;
+  height: 23px;
 }

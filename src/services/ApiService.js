@@ -51,11 +51,10 @@ const useApiService = () => {
     }, [BASE_URL]);
 
     const postAPI = useCallback((endpoint, data = null) => apiRequest('POST', endpoint, data), [apiRequest]);
-    const getAPI = useCallback((endpoint) => apiRequest('GET', endpoint), [apiRequest]);
-		
+    const getAPI = useCallback((endpoint) => apiRequest('GET', endpoint), [apiRequest]);	
     return {
         postAPI,
-        getAPI
+        getAPI,
     };
 };
 export default useApiService;

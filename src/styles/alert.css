@@ -1,0 +1,9 @@
+.alertClass {
+    width: 25% !important;
+    position: fixed !important;
+    bottom: 0;
+    right: 20px;
+    text-align: center;
+    z-index: 6000;
+    transition: all 0.3s ease-in-out;
+}

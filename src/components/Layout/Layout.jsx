@@ -11,7 +11,7 @@ export default function Layout() {
                 <SideMenu />
             </aside>
             <div className='content-container'>
-                <header className='topmenu-wrapper'>
+                <header className='topmenu-container'>
                     <TopMenu/>
                 </header>
                 <main className='content-wrapper'>

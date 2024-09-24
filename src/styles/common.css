@@ -1,0 +1,71 @@
+.cursor-pointer {
+  cursor: pointer;
+}
+.productBtn {
+  border: 1px solid #d4d4d4;
+  border-radius: 3px;
+  padding: 10px;
+  color: black;
+  background: #e4e6f6;
+  font-weight: 500;
+}
+.heading {
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+}
+.custom-label {
+  background: #03053d;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  left: 25px;
+  padding: 0 3px;
+  position: absolute;
+  top: -6px;
+  z-index: 1;
+}
+.customInput {
+  background: transparent;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+  padding: 0.8rem 1.1rem;
+  width: 100%;
+}
+.customInput:focus {
+  border-color: #80bcfc;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+.errorText {
+  font-size: 12px;
+  color: red;
+  position: absolute;
+}
+.saveBtn {
+  border: none;
+  font-size: 16px;
+  color: black;
+  background: white;
+  border-radius: 8px;
+  padding: 10px 30px 10px 30px;
+  font-weight: 600;
+}
+.table > thead > tr > th {
+  background-color: #050854;
+  color: white;
+  font-weight: 600;
+  padding: 15px;
+  font-size: 15px;
+  box-shadow: 0px 4px 4px 0px #30326059;
+}
+.table > tbody > tr > td{
+  background-color: #03053D;
+  color: white;
+  font-weight: 400;
+  padding: 15px;
+  font-size: 14px;
+}
