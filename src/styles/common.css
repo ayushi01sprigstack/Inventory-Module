@@ -4,10 +4,11 @@
 .productBtn {
   border: 1px solid #d4d4d4;
   border-radius: 3px;
-  padding: 10px;
-  color: black;
+  padding: 4px 20px;
+  color: #03053d;
   background: #e4e6f6;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 14px;
 }
 .heading {
   font-size: 32px;
@@ -54,18 +55,35 @@
   padding: 10px 30px 10px 30px;
   font-weight: 600;
 }
-.table > thead > tr > th {
+.cancelBtn {
+  border: none;
+  font-size: 16px;
+  color: white;
+  background: #6c757d;
+  border-radius: 8px;
+  padding: 10px 30px 10px 30px;
+  font-weight: 600;
+}
+.table thead tr th {
   background-color: #050854;
   color: white;
-  font-weight: 600;
+  font-weight: 500;
   padding: 15px;
-  font-size: 15px;
-  box-shadow: 0px 4px 4px 0px #30326059;
+  font-size: 16px;
 }
-.table > tbody > tr > td{
-  background-color: #03053D;
+.table tbody tr td {
+  background-color: #03053d;
   color: white;
   font-weight: 400;
   padding: 15px;
-  font-size: 14px;
+  font-size: 15px;
+}
+.table thead th {
+  border-bottom: 1px solid #484155; 
+}
+.table tbody td {
+  border-bottom: 1px solid #484155; 
+}
+.table tbody tr.redText td {
+    color: red; 
 }

@@ -1,6 +1,6 @@
 import * as Yup from 'yup';
 
-const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const emailRegex = /^[a-zA-Z0-9]+(?:[._%+-][a-zA-Z0-9]+)*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 const VendorValidationSchema = Yup.object({
     vendorName: Yup.string().required('Vendor Name is required'),

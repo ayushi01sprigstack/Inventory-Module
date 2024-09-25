@@ -70,7 +70,7 @@ export default function Vendors() {
     <>
       {showAlerts}
       {loading ? <ShowLoader /> : <HideLoader />}
-      <div className='text-end p-3 mt-3'>
+      <div className='text-end px-2 py-1 mt-2'>
         <button className='productBtn' onClick={() => navigate('/add-update-vendor')}>Add Vendor</button>
       </div>
       <div>
@@ -86,22 +86,30 @@ export default function Vendors() {
             </tr>
           </thead>
           <tbody>
-            {vendors.map((vendor) => (
-              <tr key={vendor?.id}>
-                <td>{vendor?.name}</td>
-                <td>{vendor?.email}</td>
-                <td>{vendor?.company_name}</td>
-                <td>{vendor?.contact_num}</td>
-                <td>
-                  {vendor?.products.length > 0 ?
-                    vendor?.products.map((product) => product.name).join(', ') : '-'}
-                </td>
-                <td>
-                  <FontAwesomeIcon icon={faPenToSquare} className='cursor-pointer me-3' onClick={() => navigate('/add-update-vendor', { state: { vendorId: vendor?.id } })} />
-                  <FontAwesomeIcon icon={faTrash} className='cursor-pointer' onClick={() => handleDeleteVendor(vendor?.id)} />
+            {vendors.length > 0 ? (
+              vendors.map((vendor) => (
+                <tr key={vendor?.id}>
+                  <td>{vendor?.name}</td>
+                  <td>{vendor?.email}</td>
+                  <td>{vendor?.company_name}</td>
+                  <td>{vendor?.contact_num}</td>
+                  <td>
+                    {vendor?.products.length > 0 ?
+                      vendor?.products.map((product) => product.name).join(', ') : '-'}
+                  </td>
+                  <td>
+                    <FontAwesomeIcon icon={faPenToSquare} className='cursor-pointer me-3' onClick={() => navigate('/add-update-vendor', { state: { vendorId: vendor?.id } })} />
+                    <FontAwesomeIcon icon={faTrash} className='cursor-pointer' onClick={() => handleDeleteVendor(vendor?.id)} />
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="6" className="text-center">
+                  No vendors found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>

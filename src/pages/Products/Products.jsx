@@ -74,7 +74,7 @@ export default function Products() {
         <>
             {showAlerts}
             {loading ? <ShowLoader /> : <HideLoader />}
-            <div className='text-end p-3 mt-3'>
+            <div className='text-end px-2 py-1 mt-2'>
                 <button className='productBtn' onClick={() => navigate('/add-update-product')}>Add Product</button>
             </div>
             <div>
@@ -84,29 +84,38 @@ export default function Products() {
                             <th scope="col">Sku</th>
                             <th scope="col">Product Name</th>
                             <th scope="col">Quantity</th>
+                            <th scope="col">Min Stock Quantity</th>
                             <th scope="col">Price</th>
                             <th scope="col">Vendor Name</th>
                             <th scope="col">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {products.map((product) => (
-                            <tr key={product?.id}>
-                                <td>{product?.sku}</td>
-                                <td>{product?.name}</td>
-                                <td>{product?.quantity}</td>
-                                <td>{product?.price}</td>
-                                <td>{product?.vendor?.name}</td>
-                                <td>
-                                    <FontAwesomeIcon icon={faPenToSquare} className='cursor-pointer me-3' onClick={() => navigate('/add-update-product', { state: { productId: product?.id } })} />
-                                    <FontAwesomeIcon icon={faTrash} className='cursor-pointer' onClick={() => handleDeleteProduct(product?.id)} />
+                        {products.length > 0 ? 
+                            products.map((product) => {
+                                return <tr key={product?.id} className={product?.purchaseOrderFlag == 1 ? 'redText' : ''}>
+                                    <td>{product?.sku}</td>
+                                    <td>{product?.name}</td>
+                                    <td>{product?.quantity}</td>
+                                    <td>{product?.reminder_quantity}</td>
+                                    <td>{product?.price}</td>
+                                    <td>{product?.vendor?.name}</td>
+                                    <td>
+                                        <FontAwesomeIcon icon={faPenToSquare} className='cursor-pointer text-white me-3' onClick={() => navigate('/add-update-product', { state: { productId: product?.id } })} />
+                                        <FontAwesomeIcon icon={faTrash} className='cursor-pointer text-white' onClick={() => handleDeleteProduct(product?.id)} />
+                                    </td>
+                                </tr>
+                           })
+                         : 
+                            <tr>
+                                <td colSpan="6" className="text-center">
+                                    No products found
                                 </td>
                             </tr>
-                        ))}
+                        }
                     </tbody>
                 </table>
             </div>
-
         </>
     )
 }

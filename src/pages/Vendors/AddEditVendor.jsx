@@ -94,54 +94,57 @@ export default function AddEditVendor() {
         <>
             {showAlerts}
             {loading ? <ShowLoader /> : <HideLoader />}
-            <div className="row p-4">
-                <div className='col-md-6 offset-md-3'>
-                    <div className='text-center'>
-                        <h4 className='heading pt-2'>{vendorId ? 'Edit Vendor' : 'Add Vendor'}</h4>
-                    </div>
-                    <Formik initialValues={{ vendorName: vendorDetails?.vendorName, email: vendorDetails?.email, companyName: vendorDetails?.companyName, contactNum: vendorDetails?.contactNum, address: vendorDetails?.address }} validationSchema={VendorValidationSchema} enableReinitialize={true} onSubmit={submitVendorDetails} >
-                        {() => (
-                            <Form className='pt-4 mt-2' onKeyDown={(e) => {
-                                if (e.key == 'Enter') {
-                                    e.preventDefault();
-                                }
-                            }}>
-                                <div className="row">
-                                    <div className='col-md-6 position-relative mb-5'>
-                                        <label className='custom-label'>Name <span className='text-danger'>*</span></label>
-                                        <Field type="text" className="customInput" name='vendorName' autoComplete='off' />
-                                        <ErrorMessage name='vendorName' component="div" className="text-start errorText" />
-                                    </div>
-                                    <div className='col-md-6 position-relative mb-5'>
-                                        <label className='custom-label'>Email <span className='text-danger'>*</span></label>
-                                        <Field type="email" className="customInput" name='email' autoComplete='off' />
-                                        <ErrorMessage name='email' component="div" className="text-start errorText" />
-                                    </div>
-                                    <div className='col-md-6 position-relative mb-5'>
-                                        <label className='custom-label'>Company Name <span className='text-danger'>*</span></label>
-                                        <Field type="text" className="customInput" name='companyName' autoComplete='off' />
-                                        <ErrorMessage name='companyName' component="div" className="text-start errorText" />
-                                    </div>
-                                    <div className='col-md-6 position-relative mb-5'>
-                                        <label className='custom-label' style={{ left: '70px' }}>Contact Number <span className='text-danger'>*</span></label>
-                                        <div className="input-group flex-nowrap position-relative">
-                                            <span className="input-group-text">+91</span>
-                                            <Field type="text" className="customInput" name='contactNum' autoComplete='off' style={{ borderTopRightRadius: '8px', borderBottomRightRadius: '8px' }} />
-                                            <ErrorMessage name='contactNum' component="div" className="text-start errorText" style={{ top: "50px" }} />
+            <div style={{ padding: '20px' }}>
+                <div className="row p-4">
+                    <div className='col-md-6 offset-md-3'>
+                        <div className='text-center'>
+                            <h4 className='heading pt-2'>{vendorId ? 'Edit Vendor' : 'Add Vendor'}</h4>
+                        </div>
+                        <Formik initialValues={{ vendorName: vendorDetails?.vendorName, email: vendorDetails?.email, companyName: vendorDetails?.companyName, contactNum: vendorDetails?.contactNum, address: vendorDetails?.address }} validationSchema={VendorValidationSchema} enableReinitialize={true} onSubmit={submitVendorDetails} >
+                            {() => (
+                                <Form className='pt-4 mt-2' onKeyDown={(e) => {
+                                    if (e.key == 'Enter') {
+                                        e.preventDefault();
+                                    }
+                                }}>
+                                    <div className="row">
+                                        <div className='col-md-6 position-relative mb-5'>
+                                            <label className='custom-label'>Name <span className='text-danger'>*</span></label>
+                                            <Field type="text" className="customInput" name='vendorName' autoComplete='off' />
+                                            <ErrorMessage name='vendorName' component="div" className="text-start errorText" />
+                                        </div>
+                                        <div className='col-md-6 position-relative mb-5'>
+                                            <label className='custom-label'>Email <span className='text-danger'>*</span></label>
+                                            <Field type="email" className="customInput" name='email' autoComplete='off' />
+                                            <ErrorMessage name='email' component="div" className="text-start errorText" />
+                                        </div>
+                                        <div className='col-md-6 position-relative mb-5'>
+                                            <label className='custom-label'>Company Name <span className='text-danger'>*</span></label>
+                                            <Field type="text" className="customInput" name='companyName' autoComplete='off' />
+                                            <ErrorMessage name='companyName' component="div" className="text-start errorText" />
+                                        </div>
+                                        <div className='col-md-6 position-relative mb-5'>
+                                            <label className='custom-label' style={{ left: '70px' }}>Contact Number <span className='text-danger'>*</span></label>
+                                            <div className="input-group flex-nowrap position-relative">
+                                                <span className="input-group-text">+91</span>
+                                                <Field type="text" className="customInput" name='contactNum' autoComplete='off' style={{ borderTopRightRadius: '8px', borderBottomRightRadius: '8px' }} />
+                                                <ErrorMessage name='contactNum' component="div" className="text-start errorText" style={{ top: "50px" }} />
+                                            </div>
+                                        </div>
+                                        <div className='col-md-12 position-relative mb-4'>
+                                            <label className='custom-label'>Address <span className='text-danger'>*</span></label>
+                                            <Field as="textarea" className="customInput" name='address' autoComplete='off' rows="4" />
+                                            <ErrorMessage name='address' component="div" className="text-start errorText" />
                                         </div>
                                     </div>
-                                    <div className='col-md-12 position-relative mb-4'>
-                                        <label className='custom-label'>Address</label>
-                                        <Field as="textarea" className="customInput" name='address' autoComplete='off' rows="4" />
-                                        <ErrorMessage name='address' component="div" className="text-start errorText" />
+                                    <div className='mt-2 text-end'>
+                                        <button className='cancelBtn me-3' onClick={() => navigate('/vendors')}>Cancel</button>
+                                        <button type="submit" className='saveBtn'>Save</button>
                                     </div>
-                                </div>
-                                <div className='mt-2 text-end'>
-                                    <button type="submit" className='saveBtn'>Save</button>
-                                </div>
-                            </Form>
-                        )}
-                    </Formik>
+                                </Form>
+                            )}
+                        </Formik>
+                    </div>
                 </div>
             </div>
         </>
