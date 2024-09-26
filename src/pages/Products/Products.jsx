@@ -76,6 +76,8 @@ export default function Products() {
             {loading ? <ShowLoader /> : <HideLoader />}
             <div className='text-end px-2 py-1 mt-2'>
                 <button className='productBtn' onClick={() => navigate('/add-update-product')}>Add Product</button>
+                <br />
+                <span className='redText'>*Current stock quantity is below the minimum stock quantity required.</span>
             </div>
             <div>
                 <table className="table table-responsive mt-2">
@@ -91,9 +93,9 @@ export default function Products() {
                         </tr>
                     </thead>
                     <tbody>
-                        {products.length > 0 ? 
-                            products.map((product) => {
-                                return <tr key={product?.id} className={product?.purchaseOrderFlag == 1 ? 'redText' : ''}>
+                        {products.length > 0 ? (
+                            products.map((product) => (
+                                <tr key={product?.id} className={product?.purchaseOrderFlag == 1 ? 'redText' : ''}>
                                     <td>{product?.sku}</td>
                                     <td>{product?.name}</td>
                                     <td>{product?.quantity}</td>
@@ -105,13 +107,14 @@ export default function Products() {
                                         <FontAwesomeIcon icon={faTrash} className='cursor-pointer text-white' onClick={() => handleDeleteProduct(product?.id)} />
                                     </td>
                                 </tr>
-                           })
-                         : 
+                            ))
+                        ) : (
                             <tr>
-                                <td colSpan="6" className="text-center">
+                                <td colSpan="7" className="text-center">
                                     No products found
                                 </td>
                             </tr>
+                        )
                         }
                     </tbody>
                 </table>

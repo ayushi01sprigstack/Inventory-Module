@@ -32,8 +32,11 @@ export default function AddEditProduct() {
     useEffect(() => {
         getCategories();
         getVendors();
+    }, []);
+    useEffect(() => {
         getProductById();
-    }, [])
+    }, [categoriesAndVendors.vendors]);
+
     const getCategories = async () => {
         setLoading(true);
         try {
@@ -84,7 +87,7 @@ export default function AddEditProduct() {
                 }
                 else {
                     const responseRs = JSON.parse(result);
-                    // const vendorExists = categoriesAndVendors.vendors.length > 0 && categoriesAndVendors.vendors.some(vendor => vendor.id == responseRs.vendor_id);
+                    const vendorExists = categoriesAndVendors.vendors.length > 0 && categoriesAndVendors.vendors.some(vendor => vendor.id == responseRs.vendor_id);
                     setProductDetails(prevState => ({
                         ...prevState,
                         productName: responseRs?.name || '',
@@ -94,8 +97,7 @@ export default function AddEditProduct() {
                         minQuantity: responseRs?.reminder_quantity || '',
                         price: responseRs?.price || '',
                         description: responseRs?.description || '',
-                        // selectedVendor: vendorExists ? responseRs.vendor_id : ''
-                        selectedVendor: responseRs.vendor_id || ''
+                        selectedVendor: vendorExists ? responseRs.vendor_id : ''
                     }))
                     setLoading(false);
                 }
@@ -222,7 +224,7 @@ export default function AddEditProduct() {
                                             ) : (
                                                 <>
                                                     <br />
-                                                    <span className='text-white' style={{ fontSize: '13px' }}>Currently there are no vendors available so please add vendor first.</span>
+                                                    <span className='text-white' style={{ fontSize: '13px' }}>Currently there are no vendors available so please add vendor first to select vendor</span>
                                                     <br />
                                                     <button type="button" className="productBtn mt-3" onClick={() => navigate('/add-update-vendor')}>
                                                         Add Vendor

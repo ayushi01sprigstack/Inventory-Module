@@ -87,3 +87,7 @@
 .table tbody tr.redText td {
     color: red; 
 }
+.redText{
+  font-size: 13px;
+  color: red; 
+}
