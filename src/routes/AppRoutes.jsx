@@ -12,8 +12,8 @@ export default function AppRoutes() {
             <Routes>
                 <Route element={<Layout />}>
                     <Route path='/' element={<Products/>} />
-                    <Route path='/products' element={<Products />} />
-                    <Route path='/add-update-product' element={<AddEditProduct />} />
+                    <Route path='/inventory' element={<Products />} />
+                    <Route path='/add-update-inventory' element={<AddEditProduct />} />
                     <Route path='/vendors' element={<Vendors />} />
                     <Route path='/add-update-vendor' element={<AddEditVendor />} />                   
                 </Route>

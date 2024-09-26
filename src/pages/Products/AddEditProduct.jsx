@@ -81,7 +81,7 @@ export default function AddEditProduct() {
         if (productId) {
             setLoading(true);
             try {
-                const result = await getAPI(`/get-product-details/${productId}`);
+                const result = await getAPI(`/get-inventory-details/${productId}`);
                 if (!result || result == '') {
                     alert('Something went wrong');
                 }
@@ -120,20 +120,20 @@ export default function AddEditProduct() {
             price: values?.price,
             categoryId: values?.selectedCategory,
             vendorId: values?.selectedVendor,
-            productId: productId ? productId : 0
+            inventoryId: productId ? productId : 0
         })
         try {
-            const result = await postAPI('/add-update-product', raw);
+            const result = await postAPI('/add-update-inventory', raw);
             if (!result || result == "") {
                 alert('Something went wrong');
             } else {
                 const responseRs = JSON.parse(result);
                 if (responseRs.status == 'success') {
-                    setShowAlerts(<AlertComp show={true} variant="success" message={productId ? 'Product Updated successfully' : 'Product Added successfully'} />);
+                    setShowAlerts(<AlertComp show={true} variant="success" message={productId ? 'Item Updated successfully' : 'Item Added successfully'} />);
                     setTimeout(() => {
                         setLoading(false);
                         setShowAlerts(<AlertComp show={false} />);
-                        navigate('/products');
+                        navigate('/inventory');
                     }, 2500);
                 }
                 else {
@@ -157,7 +157,7 @@ export default function AddEditProduct() {
                 <div className="row p-4">
                     <div className='col-md-6 offset-md-3'>
                         <div className='text-center'>
-                            <h4 className='heading pt-2'>{productId ? 'Edit Product' : 'Add Product'}</h4>
+                            <h4 className='heading pt-2'>{productId ? 'Edit Item' : 'Add Item'}</h4>
                         </div>
                         <Formik initialValues={{ selectedCategory: productDetails?.selectedCategory, sku: productDetails?.sku, productName: productDetails?.productName, quantity: productDetails?.quantity, minQuantity: productDetails?.minQuantity, price: productDetails?.price, description: productDetails?.description, selectedVendor: productDetails?.selectedVendor }} validationSchema={ProductValidationSchema} enableReinitialize={true} onSubmit={submitProductDetails} >
                             {() => (
@@ -234,7 +234,7 @@ export default function AddEditProduct() {
                                         </div>
                                     </div>
                                     <div className='mt-2 text-end'>
-                                        <button className='cancelBtn me-3' onClick={() => navigate('/products')}>Cancel</button>
+                                        <button className='cancelBtn me-3' onClick={() => navigate('/inventory')}>Cancel</button>
                                         <button type="submit" className='saveBtn'>Save</button>
                                     </div>
                                 </Form>

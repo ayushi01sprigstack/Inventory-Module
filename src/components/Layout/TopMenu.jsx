@@ -9,7 +9,12 @@ export default function TopMenu() {
         <input type="text" className="form-control searchInput" placeholder="Search" />
       </div>
       <div>
-        <img src={Images.dummyProfile} alt="profile" style={{height:'50px', borderRadius:'50%'}}/>
+        <img src={Images.calendar} alt="calendar" className='me-3 imgClass'/>
+        <img src={Images.message} alt="message" className='me-2 imgClass'/>
+        <img src={Images.notification} alt="notification" className='me-2 imgClass'/>
+        <span className='text-white fw-normal me-2' style={{fontSize:'13px'}}>Henry Jr.</span>
+        <span></span>
+        <img src={Images.profile} alt="profile" />
       </div>
     </div>
   )
