@@ -4,11 +4,15 @@ import useApiService from '../../services/ApiService';
 import ShowLoader from '../../components/loader/ShowLoader';
 import HideLoader from '../../components/loader/HideLoader';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenToSquare, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCartShopping, faPenToSquare, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
 import AlertComp from '../../components/AlertComp';
 import Images from '../../utils/Images';
 import PaginationComp from '../../components/PaginationComp';
+import { typewatch } from '../../utils/js/Common';
+import Popup from '../../components/Popup';
+import { Field, Formik, Form, ErrorMessage, } from 'formik';
+import * as Yup from 'yup';
 
 export default function Products() {
     const navigate = useNavigate();
@@ -27,9 +31,24 @@ export default function Products() {
     const [inventoryParamters, setInventoryParamters] = useState({
         searchkey: '',
         sortKey: null,
-        sortByFlag: 'asc'
-    })
+        sortByFlag: 'desc'
+    });
+    const [showUtlizationPopup, setShowUtlizationPopup] = useState(false);
+    const [inventoryId, setInventoryId] = useState(null);
     const { getAPI, postAPI } = useApiService();
+    const [selectedInventoryIds, setSelectedInventoryIds] = useState([]);
+    const [isAllSelected, setIsAllSelected] = useState(false);
+    const [showPoModal, setShowPoModal] = useState(false);
+    const [poDetails, setPoDetails] = useState({
+        inventoryId: '',
+        inventoryName: '',
+        sku: '',
+        price: '',
+        currentStock: '',
+        vendorID: '',
+        vendorName: '',
+        vendorEmail: ''
+    })
 
     useEffect(() => {
         let currentIndex = 0;
@@ -40,31 +59,34 @@ export default function Products() {
         return () => clearInterval(intervalId);
     }, []);
     useEffect(() => {
-        getAllProducts();
+        getAllProducts(inventoryParamters.searchkey ? inventoryParamters.searchkey : null, inventoryParamters.sortKey || null);
     }, [currentPage])
 
-    const getAllProducts = async () => {
-        setLoading(true);
-        const searchKeyParam = inventoryParamters.searchkey ? inventoryParamters.searchkey : null
-        const updatedSortByFlag = inventoryParamters?.sortByFlag
-        if(inventoryParamters?.sortKey){
-            updatedSortByFlag = inventoryParamters.sortByFlag == 'asc'?'desc':'asc'
-        }
-        try {
-            const result = await getAPI('/all-inventories/' + searchKeyParam + "&" + inventoryParamters?.sortKey + "&" + updatedSortByFlag + "&" + currentPage + "&" + itemsPerPage);
-            if (!result || result == '') {
-                alert('Something went wrong');
+    const getAllProducts = async (searchkey, sortkey) => {
+        typewatch(async function () {
+            setLoading(true);
+            const searchKeyParam = searchkey ? searchkey : null;
+            const updatedSortByFlag = sortkey ? (inventoryParamters.sortByFlag == 'desc' ? 'asc' : 'desc') : inventoryParamters.sortByFlag;
+            setInventoryParamters(prev => ({
+                ...prev,
+                sortByFlag: updatedSortByFlag
+            }));
+            try {
+                const result = await getAPI('/all-inventories/' + searchKeyParam + "&" + sortkey + "&" + updatedSortByFlag + "&" + currentPage + "&" + itemsPerPage);
+                if (!result || result == '') {
+                    alert('Something went wrong');
+                }
+                else {
+                    const responseRs = JSON.parse(result);
+                    setLoading(false);
+                    setProducts(responseRs.data);
+                    setTotalItems(responseRs.total);
+                }
             }
-            else {
-                const responseRs = JSON.parse(result);
-                setLoading(false);
-                setProducts(responseRs.data);
-                setTotalItems(responseRs.total);
+            catch (error) {
+                console.error(error);
             }
-        }
-        catch (error) {
-            console.error(error);
-        }
+        }, searchkey != null ? 1000 : 0);
     }
 
     const handleDeleteProduct = async (productId) => {
@@ -89,74 +111,289 @@ export default function Products() {
                         setTimeout(() => {
                             setLoading(false);
                             setShowAlerts(<AlertComp show={false} />);
-                            getAllProducts();
+                            getAllProducts(inventoryParamters.searchkey ? inventoryParamters.searchkey : null, inventoryParamters.sortKey || null);
                         }, 2500);
                     }
                 } catch (error) {
                     console.error('Failed to delete product:', error);
-                    // Swal.fire(
-                    //     'Error!',
-                    //     'There was a problem deleting the product.',
-                    //     'error'
-                    // );
                 }
             }
         })
     }
     const handleSortClick = (item) => {
+        getAllProducts(inventoryParamters.searchkey, item);
         setInventoryParamters({ ...inventoryParamters, sortKey: item });
-        getAllProducts();
+    }
+    const handleSelectAll = (event) => {
+        if (event.target.checked) {
+            const allProductIds = products.map(product => product?.id);
+            setSelectedInventoryIds(allProductIds);
+            setIsAllSelected(true);
+        } else {
+            setSelectedInventoryIds([]);
+            setIsAllSelected(false);
+        }
+    };
+    const handleSelectInventory = (id) => {
+        if (selectedInventoryIds.includes(id)) {
+            setSelectedInventoryIds(selectedInventoryIds.filter(productId => productId !== id));
+        } else {
+            setSelectedInventoryIds([...selectedInventoryIds, id]);
+        }
+    }
+    const UtilizationValidationSchema = Yup.object().shape({
+        utilizationQty: Yup.number().required('Utilization quantity is required').positive('Quantity must be greater than 0').integer('Quantity must be an integer'),
+        date: Yup.date().required('Date is required').nullable()
+    });
+
+    const modalBody = () => {
+        return (
+            <>
+                <Formik initialValues={{ utilizationQty: '', date:'', purpose:'' }} validationSchema={UtilizationValidationSchema} onSubmit={saveUtilizationQuantity} >
+                    {() => (
+                        <Form className='pt-4 mt-2' onKeyDown={(e) => {
+                            if (e.key == 'Enter') {
+                                e.preventDefault();
+                            }
+                        }}>
+                            <div className="row">
+                                <div className="col-md-6 position-relative mb-3">
+                                    <label>Enter Utilization Quantity <span className='text-danger'>*</span></label>
+                                    <Field type="number" name="utilizationQty" className="form-control mt-2" min={0} />
+                                    <ErrorMessage name="utilizationQty" component="div" className="text-start errorText" />
+                                </div>
+                                <div className="col-md-6 position-relative mb-3">
+                                    <label>Select Date <span className='text-danger'>*</span></label>
+                                    <Field type="date" name="date" className="form-control mt-2" />
+                                    <ErrorMessage name="date" component="div" className="text-start errorText" />
+                                </div>
+                                <div className="col-md-12 position-relative mb-3">
+                                    <label>Purpose</label>
+                                    <Field as="textarea" className="form-control mt-2" name='purpose' autoComplete='off' rows="2" />
+                                </div>
+                            </div>
+                            <div className='text-end'>
+                                <button className='cancelBtn' onClick={() => setShowUtlizationPopup(false)}> Close</button>
+                                <button className='saveBtn text-white ms-2' type="submit" style={{ background: '#303260' }}>Save</button>
+                            </div>
+                        </Form>
+                    )}
+                </Formik>
+            </>
+        )
+    }
+    const saveUtilizationQuantity = async (values) => {
+        setShowUtlizationPopup(false);
+        setLoading(true);
+        var raw = JSON.stringify({
+            inventoryId: inventoryId,
+            quantity: values?.utilizationQty,
+            usedDate:values?.date,
+            usagePurpose:values?.purpose
+        })
+        try {
+            const result = await postAPI('/add-inventory-utilization', raw);
+            if (!result || result == "") {
+                alert('Something went wrong');
+            } else {
+                const responseRs = JSON.parse(result);
+                if (responseRs.status == 'success') {
+                    setShowAlerts(<AlertComp show={true} variant="success" message='Utilization data added successfully' />);
+                    setTimeout(() => {
+                        setLoading(false);
+                        setShowAlerts(<AlertComp show={false} />);
+                        getAllProducts(inventoryParamters.searchkey ? inventoryParamters.searchkey : null, inventoryParamters.sortKey || null);
+                    }, 2500);
+                }
+                else {
+                    setShowAlerts(<AlertComp show={true} variant="danger" message={responseRs?.message} />);
+                    setTimeout(() => {
+                        setLoading(false);
+                        setShowAlerts(<AlertComp show={false} />);
+                    }, 2000);
+                }
+            }
+        }
+        catch (error) {
+            console.error(error);
+        }
     }
 
+    const handleGeneratePo = async (productId) => {
+        setLoading(true);
+        try {
+            const result = await getAPI(`/get-inventory-details/${productId}`);
+            if (!result || result == '') {
+                alert('Something went wrong');
+            }
+            else {
+                const responseRs = JSON.parse(result);
+                setPoDetails(prevState => ({
+                    ...prevState,
+                    inventoryId: responseRs?.id || '',
+                    inventoryName: responseRs?.name || '',
+                    sku: responseRs?.sku || '',
+                    currentStock: responseRs?.quantity || '',
+                    price: responseRs?.price || '',
+                    vendorID: responseRs?.vendor?.id || '',
+                    vendorName: responseRs?.vendor?.name || '',
+                    vendorEmail: responseRs?.vendor?.email || '',
+                }))
+                setLoading(false);
+            }
+        }
+        catch (error) {
+            console.error(error);
+        }
+    }
+    const GeneratePoValidationSchema = Yup.object().shape({
+        reOrderQuantity: Yup.number().required('Quantity is required').positive('Quantity must be greater than 0').integer('Quantity must be an integer'),
+        pricePerQuantity: Yup.number().required('Price is required').positive('Price must be greater than 0'),
+    });
+
+
+    const modalBodyPurchaseOrder = () => {
+        return (
+            <>
+                <h5 className='text-center fw-bold'>Inventory Details</h5>
+                <p><strong>Inventory Name:</strong> {poDetails?.inventoryName}</p>
+                <p><strong>SKU:</strong> {poDetails?.sku}</p>
+                <p><strong>Current Stock:</strong> {poDetails?.currentStock}</p>
+                <p><strong>Price:</strong> {poDetails?.price}</p>
+                <hr />
+                <h5 className='text-center fw-bold'>Vendor Details</h5>
+                <p><strong>Vendor Name:</strong> {poDetails?.vendorName}</p>
+                <p><strong>Vendor Email:</strong> {poDetails?.vendorEmail}</p>
+                <hr />
+                <h5 className='text-center fw-bold'>Generate PO</h5>
+                <Formik initialValues={{ reOrderQuantity: '', pricePerQuantity: '' }} validationSchema={GeneratePoValidationSchema} onSubmit={saveGeneratePO} >
+                    {() => (
+                        <Form className='pt-4 mt-2' onKeyDown={(e) => {
+                            if (e.key == 'Enter') {
+                                e.preventDefault();
+                            }
+                        }}>
+                            <div className="row mb-3">
+                                <div className="col-md-6 position-relative">
+                                    <label>Enter Quantity to reoder <span className='text-danger'>*</span></label>
+                                    <Field type="number" name="reOrderQuantity" className="form-control mt-2" min={0} />
+                                    <ErrorMessage name="reOrderQuantity" component="div" className="text-start errorText" />
+                                </div>
+                                <div className="col-md-6 position-relative">
+                                    <label>Enter Price <span className='text-danger'>*</span></label>
+                                    <Field type="number" name="pricePerQuantity" className="form-control mt-2" min={0} step="0.01" />
+                                    <ErrorMessage name="pricePerQuantity" component="div" className="text-start errorText" />
+                                </div>
+                            </div>
+                            <div className='text-end'>
+                                <button className='cancelBtn' onClick={() => setShowPoModal(false)}> Close</button>
+                                <button className='saveBtn text-white ms-2' type="submit" style={{ background: '#303260' }}>Save</button>
+                            </div>
+                        </Form>
+                    )}
+                </Formik>
+            </>
+        )
+    }
+    const saveGeneratePO = async (values) => {
+        setShowPoModal(false);
+        setLoading(true);
+        var raw = JSON.stringify({
+            vendorInventoryDetails: [
+                {
+                    vendor_id: poDetails?.vendorID,
+                    inventoryDetails: [
+                        {
+                            inventory_id: poDetails?.inventoryId,
+                            reminder_quantity: values?.reOrderQuantity,
+                            price: values?.pricePerQuantity
+                        }
+                    ]
+                }
+            ]
+        })
+        try {
+            const result = await postAPI('/generate-purchase-order', raw);
+            if (!result || result == "") {
+                alert('Something went wrong');
+            } else {
+                const responseRs = JSON.parse(result);
+                if (responseRs.status == 'success') {
+                    setShowAlerts(<AlertComp show={true} variant="success" message='Purchase Order added successfully' />);
+                    setTimeout(() => {
+                        setLoading(false);
+                        setShowAlerts(<AlertComp show={false} />);
+                        getAllProducts(inventoryParamters.searchkey ? inventoryParamters.searchkey : null, inventoryParamters.sortKey || null);
+                    }, 2500);
+                }
+                else {
+                    setShowAlerts(<AlertComp show={true} variant="danger" message={responseRs?.message} />);
+                    setTimeout(() => {
+                        setLoading(false);
+                        setShowAlerts(<AlertComp show={false} />);
+                    }, 2000);
+                }
+            }
+        }
+        catch (error) {
+            console.error(error);
+        }
+    }
     return (
         <>
             {showAlerts}
             {loading ? <ShowLoader /> : <HideLoader />}
-            <div className='px-3 py-2'>
+            <h4 className='pageheader p-2 m-0'>Inventory Management</h4>
+            <hr className='horizontal-line' />
+            <div className='headerWrapper mt-3'>
                 <div className="row align-items-center ps-3">
                     <div className="col-4 p-1 position-relative">
                         <img src={Images.searchIcon} alt="search-icon" className="search-icon" style={{ left: '10px', top: '53%' }} />
-                        <input type="text" className="form-control" placeholder={placeholder} style={{ padding: '.375rem 1.75rem' }} onChange={(e) => { setInventoryParamters({ ...inventoryParamters, searchkey: e.target.value }); getAllProducts() }} />
+                        <input type="text" className="form-control" placeholder={placeholder} style={{ padding: '.375rem 1.75rem' }} onChange={(e) => { setInventoryParamters({ ...inventoryParamters, searchkey: e.target.value }); getAllProducts(e.target.value, inventoryParamters.sortKey) }} />
                     </div>
                     <div className="col-8 text-end">
-                        <button className='productBtn' onClick={() => navigate('/add-update-inventory')}>Add Item</button>
-                        <br />
-                        <span className='redText'>*Current stock quantity is below the minimum stock quantity required.</span>
+                        <button className='productBtn' onClick={() => navigate('/add-update-inventory')}> <img src={Images.addIcon} alt="addIcon" className='me-2' />Add Item</button>
                     </div>
                 </div>
             </div>
-            <div>
-                <table className="table table-responsive">
+            <div className='p-4'>
+                <span className='redText'>*Current stock quantity is below the minimum stock quantity required.</span>
+                <table className="table table-responsive mt-2">
                     <thead>
                         <tr>
+                            <th><input type="checkbox" className='cursor-pointer' onChange={handleSelectAll} checked={isAllSelected} /></th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('sku')}>Sku<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')}>Item Name<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('quantity')}>Quantity<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('reminder_quantity')}>Min Stock Quantity<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('price')}>Price<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
-                            <th scope="col" className='cursor-pointer'>Vendor Name<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
-                            <th scope="col" className='cursor-pointer'>Action</th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('vendor_name')}>Vendor Name<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
+                            <th scope="col" className=''>Action</th>
+                            <th scope="col" className=''>PO</th>
                         </tr>
                     </thead>
                     <tbody>
                         {products.length > 0 ? (
                             products.map((product) => (
                                 <tr key={product?.id} className={product?.purchaseOrderFlag == 1 ? 'redText' : ''}>
+                                    <td><input type="checkbox" className='cursor-pointer' checked={selectedInventoryIds.includes(product?.id)} onChange={() => handleSelectInventory(product?.id)} /></td>
                                     <td>{product?.sku}</td>
                                     <td>{product?.name}</td>
                                     <td>{product?.quantity}</td>
                                     <td>{product?.reminder_quantity}</td>
                                     <td>{product?.price}</td>
-                                    <td>{product?.vendor?.name}</td>
+                                    <td>{product?.vendor_name}</td>
                                     <td>
-                                        <FontAwesomeIcon icon={faPenToSquare} className='cursor-pointer text-white me-3' onClick={() => navigate('/add-update-inventory', { state: { productId: product?.id } })} />
-                                        <FontAwesomeIcon icon={faTrash} className='cursor-pointer text-white' onClick={() => handleDeleteProduct(product?.id)} />
+                                        <FontAwesomeIcon icon={faPenToSquare} className='cursor-pointer text-white me-3' title="Edit item" onClick={() => navigate('/add-update-inventory', { state: { productId: product?.id } })} />
+                                        <FontAwesomeIcon icon={faTrash} className='cursor-pointer text-white me-3' title="Delete item" onClick={() => handleDeleteProduct(product?.id)} />
+                                        <img src={Images.utilization} alt="utilization" className='cursor-pointer text-white' style={{ height: '25px' }} title='Add utilization quantity' onClick={() => { setShowUtlizationPopup(true); setInventoryId(product?.id) }} />
                                     </td>
+                                    <td><img src={Images.poIcon} alt="po-icon" className='cursor-pointer' title="Generate PO" style={{ height: '20px' }} onClick={() => { setShowPoModal(true); handleGeneratePo(product?.id) }} /></td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="7" className="text-center">
+                                <td colSpan="8" className="text-center">
                                     No Items found
                                 </td>
                             </tr>
@@ -173,6 +410,8 @@ export default function Products() {
                     onPageChange={setCurrentPage}
                 />
             </div>
+            <Popup show={showUtlizationPopup} handleClose={() => setShowUtlizationPopup(false)} size="md" modalHeader="Add Utilization Quantity" modalBody={modalBody()} modalFooter={false} />
+            <Popup show={showPoModal} handleClose={() => setShowPoModal(false)} size="lg" modalHeader="Generate Purchase Order" modalBody={modalBodyPurchaseOrder()} modalFooter={false} />
         </>
     )
 }

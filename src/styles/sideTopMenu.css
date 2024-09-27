@@ -32,7 +32,7 @@
 }
 .content-wrapper {
   flex-grow: 1;
-  /* padding: 20px; */
+  padding: 2px;
   background-color: #03053d;
   overflow-y: auto;
 }

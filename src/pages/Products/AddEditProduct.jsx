@@ -60,7 +60,7 @@ export default function AddEditProduct() {
     const getVendors = async () => {
         setLoading(true);
         try {
-            const result = await getAPI('/get-vendors');
+            const result = await getAPI('/get-vendors-data');
             if (!result || result == '') {
                 alert('Something went wrong');
             }
@@ -116,7 +116,7 @@ export default function AddEditProduct() {
             name: values?.productName,
             description: values?.description ? values?.description : null,
             quantity: values?.quantity,
-            remiderQuantity: values?.minQuantity,
+            reminderQuantity: values?.minQuantity,
             price: values?.price,
             categoryId: values?.selectedCategory,
             vendorId: values?.selectedVendor,

@@ -1,5 +1,6 @@
 import React from 'react'
 import { Pagination } from 'react-bootstrap';
+import '../styles/pagination.css'
 
 export default function PaginationComp({ totalItems, itemsPerPage, currentPage, onPageChange }) {
     const totalPages = Math.ceil(totalItems / itemsPerPage);

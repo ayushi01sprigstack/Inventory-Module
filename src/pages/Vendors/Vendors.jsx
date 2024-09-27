@@ -9,6 +9,8 @@ import AlertComp from '../../components/AlertComp';
 import Swal from 'sweetalert2';
 import PaginationComp from '../../components/PaginationComp';
 import Images from '../../utils/Images';
+import { typewatch } from '../../utils/js/Common';
+
 
 export default function Vendors() {
   const navigate = useNavigate();
@@ -25,6 +27,12 @@ export default function Vendors() {
     'Search by Item Name',
     'Search by Company Name',
   ];
+  const [vendorParamters, setVendorParamters] = useState({
+    searchkey: '',
+    sortKey: null,
+    sortByFlag: 'desc'
+  })
+
   useEffect(() => {
     let currentIndex = 0;
     const intervalId = setInterval(() => {
@@ -34,26 +42,34 @@ export default function Vendors() {
     return () => clearInterval(intervalId);
   }, []);
   useEffect(() => {
-    getAllVendors();
+    getAllVendors(vendorParamters.searchkey ? vendorParamters.searchkey : null, vendorParamters.sortKey || null);
   }, [])
 
-  const getAllVendors = async () => {
-    setLoading(true);
-    try {
-      const result = await getAPI('/get-vendors');
-      if (!result || result == '') {
-        alert('Something went wrong');
+  const getAllVendors = async (searchkey, sortkey) => {
+    typewatch(async function () {
+      setLoading(true);
+      const searchKeyParam = searchkey ? searchkey : null;
+      const updatedSortByFlag = sortkey ? (vendorParamters.sortByFlag == 'desc' ? 'asc' : 'desc'): vendorParamters.sortByFlag;
+      setVendorParamters(prev => ({
+          ...prev,
+          sortByFlag: updatedSortByFlag
+      }));
+      try {
+        const result = await getAPI('/get-vendors/' + searchKeyParam + "&" + sortkey + "&" + updatedSortByFlag + "&" + currentPage + "&" + itemsPerPage);
+        if (!result || result == '') {
+          alert('Something went wrong');
+        }
+        else {
+          const responseRs = JSON.parse(result);
+          setLoading(false);
+          setVendors(responseRs?.data);
+          setTotalItems(responseRs.total);
+        }
       }
-      else {
-        const responseRs = JSON.parse(result);
-        setLoading(false);
-        setVendors(responseRs);
-        // setTotalItems(responseRs.length);
+      catch (error) {
+        console.error(error);
       }
-    }
-    catch (error) {
-      console.error(error);
-    }
+    }, searchkey != null ? 1000 : 0);
   }
   const handleDeleteVendor = async (vendorId) => {
     Swal.fire({
@@ -77,7 +93,7 @@ export default function Vendors() {
             setTimeout(() => {
               setLoading(false);
               setShowAlerts(<AlertComp show={false} />);
-              getAllVendors();
+              getAllVendors(vendorParamters.searchkey ? vendorParamters.searchkey : null, vendorParamters.sortKey || null);
             }, 2500);
           }
         } catch (error) {
@@ -85,6 +101,11 @@ export default function Vendors() {
         }
       }
     })
+  }
+
+  const handleSortClick = (item) => {
+    getAllVendors(vendorParamters.searchkey, item);
+    setVendorParamters({ ...vendorParamters, sortKey: item });
   }
   return (
     <>
@@ -94,7 +115,7 @@ export default function Vendors() {
         <div className="row align-items-center">
           <div className="col-4 p-1 position-relative">
             <img src={Images.searchIcon} alt="search-icon" className="search-icon" style={{ left: '10px', top: '53%' }} />
-            <input type="text" className="form-control" placeholder={placeholder} style={{ padding: '.375rem 1.75rem' }} />
+            <input type="text" className="form-control" placeholder={placeholder} style={{ padding: '.375rem 1.75rem' }} onChange={(e) => { setVendorParamters({ ...vendorParamters, searchkey: e.target.value }); getAllVendors(e.target.value, vendorParamters.sortKey) }} />
           </div>
           <div className="col-8 text-end">
             <button className='productBtn' onClick={() => navigate('/add-update-vendor')}>Add Vendor</button>
@@ -105,9 +126,9 @@ export default function Vendors() {
         <table className="table table-responsive mt-2">
           <thead>
             <tr>
-              <th scope="col">Vendor Name<FontAwesomeIcon icon={faSort} className='ms-2'/></th>
-              <th scope="col">Email<FontAwesomeIcon icon={faSort} className='ms-2'/></th>
-              <th scope="col">Company Name<FontAwesomeIcon icon={faSort} className='ms-2'/></th>
+              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')}>Vendor Name<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
+              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('email')}>Email<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
+              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('company_name')}>Company Name<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
               <th scope="col">Contact Number</th>
               <th scope="col">Products</th>
               <th scope="col">Action</th>
