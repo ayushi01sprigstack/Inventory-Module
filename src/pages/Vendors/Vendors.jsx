@@ -111,18 +111,20 @@ export default function Vendors() {
     <>
       {showAlerts}
       {loading ? <ShowLoader /> : <HideLoader />}
-      <div className='px-3 py-2'>
-        <div className="row align-items-center">
+      <h4 className='pageheader p-2 m-0'>Vendors</h4>
+      <hr className='horizontal-line' />
+      <div className='headerWrapper mt-3'>
+        <div className="row align-items-center ps-3">
           <div className="col-4 p-1 position-relative">
             <img src={Images.searchIcon} alt="search-icon" className="search-icon" style={{ left: '10px', top: '53%' }} />
             <input type="text" className="form-control" placeholder={placeholder} style={{ padding: '.375rem 1.75rem' }} onChange={(e) => { setVendorParamters({ ...vendorParamters, searchkey: e.target.value }); getAllVendors(e.target.value, vendorParamters.sortKey) }} />
           </div>
           <div className="col-8 text-end">
-            <button className='productBtn' onClick={() => navigate('/add-update-vendor')}>Add Vendor</button>
+            <button className='productBtn' onClick={() => navigate('/add-update-vendor')}> <img src={Images.addIcon} alt="addIcon" className='me-2' />Add Vendor</button>
           </div>
         </div>
       </div>
-      <div>
+      <div className='p-4'>
         <table className="table table-responsive mt-2">
           <thead>
             <tr>
@@ -130,7 +132,7 @@ export default function Vendors() {
               <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('email')}>Email<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
               <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('company_name')}>Company Name<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
               <th scope="col">Contact Number</th>
-              <th scope="col">Products</th>
+              <th scope="col">Item Name</th>
               <th scope="col">Action</th>
             </tr>
           </thead>
