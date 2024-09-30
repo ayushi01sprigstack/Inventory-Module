@@ -4,7 +4,7 @@ import useApiService from '../../services/ApiService';
 import ShowLoader from '../../components/loader/ShowLoader';
 import HideLoader from '../../components/loader/HideLoader';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCartShopping, faPenToSquare, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
 import AlertComp from '../../components/AlertComp';
 import Images from '../../utils/Images';
@@ -45,11 +45,20 @@ export default function Products() {
         sku: '',
         price: '',
         currentStock: '',
+        description: '',
+        categoryName: '',
         vendorID: '',
         vendorName: '',
-        vendorEmail: ''
+        vendorEmail: '',
+        vendorContactNum: '',
+        address: '',
+        companyName: ''
     })
-
+    const [previewPo, setPreviewPo] = useState(false);
+    const [previewErrorMsg, setPreviewErrorMsg] = useState('');
+    const today = new Date().toISOString().split('T')[0];
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [selectedIdsQueue, setSelectedIdsQueue] = useState([]);
     useEffect(() => {
         let currentIndex = 0;
         const intervalId = setInterval(() => {
@@ -145,11 +154,10 @@ export default function Products() {
         utilizationQty: Yup.number().required('Utilization quantity is required').positive('Quantity must be greater than 0').integer('Quantity must be an integer'),
         date: Yup.date().required('Date is required').nullable()
     });
-
     const modalBody = () => {
         return (
             <>
-                <Formik initialValues={{ utilizationQty: '', date:'', purpose:'' }} validationSchema={UtilizationValidationSchema} onSubmit={saveUtilizationQuantity} >
+                <Formik initialValues={{ utilizationQty: '', date: today, purpose: '' }} validationSchema={UtilizationValidationSchema} onSubmit={saveUtilizationQuantity} >
                     {() => (
                         <Form className='pt-4 mt-2' onKeyDown={(e) => {
                             if (e.key == 'Enter') {
@@ -188,8 +196,8 @@ export default function Products() {
         var raw = JSON.stringify({
             inventoryId: inventoryId,
             quantity: values?.utilizationQty,
-            usedDate:values?.date,
-            usagePurpose:values?.purpose
+            usedDate: values?.date,
+            usagePurpose: values?.purpose
         })
         try {
             const result = await postAPI('/add-inventory-utilization', raw);
@@ -234,10 +242,15 @@ export default function Products() {
                     inventoryName: responseRs?.name || '',
                     sku: responseRs?.sku || '',
                     currentStock: responseRs?.quantity || '',
+                    description: responseRs?.description || null,
+                    categoryName: responseRs?.category?.name,
                     price: responseRs?.price || '',
                     vendorID: responseRs?.vendor?.id || '',
                     vendorName: responseRs?.vendor?.name || '',
                     vendorEmail: responseRs?.vendor?.email || '',
+                    vendorContactNum: responseRs?.vendor?.contact_num,
+                    address: responseRs?.vendor?.address,
+                    companyName: responseRs?.vendor?.company_name
                 }))
                 setLoading(false);
             }
@@ -248,46 +261,119 @@ export default function Products() {
     }
     const GeneratePoValidationSchema = Yup.object().shape({
         reOrderQuantity: Yup.number().required('Quantity is required').positive('Quantity must be greater than 0').integer('Quantity must be an integer'),
-        pricePerQuantity: Yup.number().required('Price is required').positive('Price must be greater than 0'),
     });
 
-
+    const handlePreviewPo = async (validateForm) => {
+        const formErrors = await validateForm();
+        if (Object.keys(formErrors).length == 0) {
+            setPreviewPo(!previewPo);
+            setPreviewErrorMsg('');
+        } else {
+            setPreviewErrorMsg('Please enter quanity.')
+        }
+    }
     const modalBodyPurchaseOrder = () => {
         return (
             <>
-                <h5 className='text-center fw-bold'>Inventory Details</h5>
-                <p><strong>Inventory Name:</strong> {poDetails?.inventoryName}</p>
-                <p><strong>SKU:</strong> {poDetails?.sku}</p>
-                <p><strong>Current Stock:</strong> {poDetails?.currentStock}</p>
-                <p><strong>Price:</strong> {poDetails?.price}</p>
-                <hr />
-                <h5 className='text-center fw-bold'>Vendor Details</h5>
-                <p><strong>Vendor Name:</strong> {poDetails?.vendorName}</p>
-                <p><strong>Vendor Email:</strong> {poDetails?.vendorEmail}</p>
-                <hr />
-                <h5 className='text-center fw-bold'>Generate PO</h5>
-                <Formik initialValues={{ reOrderQuantity: '', pricePerQuantity: '' }} validationSchema={GeneratePoValidationSchema} onSubmit={saveGeneratePO} >
-                    {() => (
-                        <Form className='pt-4 mt-2' onKeyDown={(e) => {
+                {!previewPo && (
+                    <>
+                        <div className="row">
+                            <div className="col-md-6">
+                                <h5 className='fw-bold mb-4 text-decoration-underline'>Inventory Details</h5>
+                                <p><strong>Category:</strong> {poDetails?.categoryName}</p>
+                                <p><strong>Inventory Name:</strong> {poDetails?.inventoryName}</p>
+                                <p><strong>SKU:</strong> {poDetails?.sku}</p>
+                                <p><strong>Current Stock:</strong> {poDetails?.currentStock}</p>
+                                <p><strong>Price:</strong> {poDetails?.price}</p>
+                                <p><strong>Description:</strong> {poDetails?.description ? poDetails?.description : '-'}</p>
+                            </div>
+                            <div className="col-md-6">
+                                <h5 className='fw-bold mb-4 text-decoration-underline'>Vendor Details</h5>
+                                <p><strong>Name:</strong> {poDetails?.vendorName}</p>
+                                <p><strong>Email:</strong> {poDetails?.vendorEmail}</p>
+                                <p><strong>Contact Number:</strong> {poDetails?.vendorContactNum}</p>
+                                <p><strong>Address:</strong> {poDetails?.address}</p>
+                                <p><strong>Company Name:</strong> {poDetails?.companyName}</p>
+                            </div>
+                        </div>
+                        <hr />
+                        <h5 className='text-center fw-bold text-decoration-underline'>Generate PO</h5>
+                    </>
+                )}
+                <Formik initialValues={{ reOrderQuantity: '' }} validationSchema={GeneratePoValidationSchema} 
+                onSubmit={saveGeneratePO}
+                    // onSubmit={(values, { resetForm }) => {
+                    //     if (currentIndex + 1 == selectedIdsQueue.length) {
+                    //         saveGeneratePO(values);
+                    //     }
+                    //     else {
+                    //         handleNext(resetForm);
+                    //     }
+                    // }}
+                >
+                    {({ values, validateForm }) => (
+                        <Form className={`${previewPo ? '' : 'pt-4 mt-2'}`} onKeyDown={(e) => {
                             if (e.key == 'Enter') {
                                 e.preventDefault();
                             }
                         }}>
-                            <div className="row mb-3">
-                                <div className="col-md-6 position-relative">
-                                    <label>Enter Quantity to reoder <span className='text-danger'>*</span></label>
-                                    <Field type="number" name="reOrderQuantity" className="form-control mt-2" min={0} />
-                                    <ErrorMessage name="reOrderQuantity" component="div" className="text-start errorText" />
+                            {!previewPo && (
+                                <div className="row mb-3">
+                                    <div className="col-md-6 position-relative">
+                                        <label>Enter Quantity to reoder <span className='text-danger'>*</span></label>
+                                        <Field type="number" name="reOrderQuantity" className="form-control mt-2" min={0} />
+                                        <ErrorMessage name="reOrderQuantity" component="div" className="text-start errorText" />
+                                    </div>
+                                    <div className="col-md-6 position-relative">
+                                        <label>Price</label>
+                                        <Field type="number" value={poDetails?.price} className="form-control mt-2" min={0} step="0.01" disabled />
+                                    </div>
                                 </div>
-                                <div className="col-md-6 position-relative">
-                                    <label>Enter Price <span className='text-danger'>*</span></label>
-                                    <Field type="number" name="pricePerQuantity" className="form-control mt-2" min={0} step="0.01" />
-                                    <ErrorMessage name="pricePerQuantity" component="div" className="text-start errorText" />
-                                </div>
+                            )}
+
+                            {previewPo && (
+                                <>
+                                    {/* <h4 className='fw-bold text-center'>Preview PO Details</h4> */}
+                                    <div className="preview-section p-3 mb-3 border rounded p-3">
+                                        <h3 className='fw-bold mb-3 text-center'>Purchase Order</h3>
+                                        <hr />
+                                        <div className='text-end p-2'>
+                                            <p><strong>Generated on:</strong> {today}</p>
+                                        </div>
+                                        <div className='mt-1 p-2'>
+                                            <p><strong>Vendor Name: </strong> {poDetails?.vendorName}</p>
+                                            <p><strong>Address:</strong> {poDetails?.address}</p>
+                                        </div>
+                                        <div className='purchaseOrderTable'>
+                                        <table className='table table-responsive table-bordered'>
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col" className='cursor-pointer'>Item Name</th>
+                                                    <th scope="col" className='cursor-pointer'>Quantity</th>
+                                                    <th scope="col" className='cursor-pointer'>Price</th>
+                                                    <th scope="col" className='cursor-pointer'>Total Price</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>{poDetails?.inventoryName}</td>
+                                                    <td>{values?.reOrderQuantity}</td>
+                                                    <td>{poDetails?.price}</td>
+                                                    <td>{(poDetails?.price * values?.reOrderQuantity || 0).toFixed(2)}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                            <div className='text-danger text-center'>{previewErrorMsg}</div>
+                            <div className="text-end mt-4">
+                                <button type="button" className='saveBtn text-white' style={{ background: '#303260' }} onClick={() => handlePreviewPo(validateForm)}> {previewPo ? 'Hide Preview' : 'Preview PO'}</button>
                             </div>
-                            <div className='text-end'>
-                                <button className='cancelBtn' onClick={() => setShowPoModal(false)}> Close</button>
-                                <button className='saveBtn text-white ms-2' type="submit" style={{ background: '#303260' }}>Save</button>
+                            <div className='text-end mt-4'>
+                                <button className='cancelBtn' type="button" onClick={() => setShowPoModal(false)}> Close</button>
+                                <button className='saveBtn text-white ms-2' type="submit" style={{ background: '#303260' }}> {currentIndex + 1 == selectedIdsQueue.length || selectedInventoryIds.length == 0 ? 'Save' : 'Save and Next'}</button>
                             </div>
                         </Form>
                     )}
@@ -295,7 +381,22 @@ export default function Products() {
             </>
         )
     }
+    const handleNext = (resetForm) => {
+        if (currentIndex + 1 < selectedIdsQueue.length) {
+            const nextIndex = currentIndex + 1;
+            setCurrentIndex(nextIndex);
+            handleGeneratePo(selectedIdsQueue[nextIndex]);
+            resetForm({ reOrderQuantity: '', pricePerQuantity: '' })
+        } else {
+            setShowPoModal(false);
+            setCurrentIndex(0);
+            setSelectedIdsQueue([]);
+            setSelectedInventoryIds([]);
+        }
+    };
+
     const saveGeneratePO = async (values) => {
+        console.log(values)
         setShowPoModal(false);
         setLoading(true);
         var raw = JSON.stringify({
@@ -306,7 +407,6 @@ export default function Products() {
                         {
                             inventory_id: poDetails?.inventoryId,
                             reminder_quantity: values?.reOrderQuantity,
-                            price: values?.pricePerQuantity
                         }
                     ]
                 }
@@ -319,7 +419,7 @@ export default function Products() {
             } else {
                 const responseRs = JSON.parse(result);
                 if (responseRs.status == 'success') {
-                    setShowAlerts(<AlertComp show={true} variant="success" message='Purchase Order added successfully' />);
+                    setShowAlerts(<AlertComp show={true} variant="success" message='Purchase Order generated successfully' />);
                     setTimeout(() => {
                         setLoading(false);
                         setShowAlerts(<AlertComp show={false} />);
@@ -339,6 +439,16 @@ export default function Products() {
             console.error(error);
         }
     }
+    const handleGenerateMultiplePo = () => {
+        setPreviewErrorMsg('')
+        if (selectedInventoryIds.length > 0) {
+            setSelectedIdsQueue(selectedInventoryIds);
+            setCurrentIndex(0);
+            handleGeneratePo(selectedInventoryIds[0]);
+            setShowPoModal(true);
+        }
+    }
+
     return (
         <>
             {showAlerts}
@@ -352,11 +462,14 @@ export default function Products() {
                         <input type="text" className="form-control" placeholder={placeholder} style={{ padding: '.375rem 1.75rem' }} onChange={(e) => { setInventoryParamters({ ...inventoryParamters, searchkey: e.target.value }); getAllProducts(e.target.value, inventoryParamters.sortKey) }} />
                     </div>
                     <div className="col-8 text-end">
-                        <button className='productBtn' onClick={() => navigate('/add-update-inventory')}> <img src={Images.addIcon} alt="addIcon" className='me-2' />Add Item</button>
+                        <button className='productBtn' onClick={() => navigate('/add-update-inventory')}> <img src={Images.addIcon} alt="addIcon" className='me-1' />Add Item</button>
+                        {selectedInventoryIds.length > 1 &&
+                            <button className='productBtn' onClick={handleGenerateMultiplePo}> <img src={Images.poIcon} alt="po-icon" className='me-1 ms-3' style={{ height: '20px' }} />Generate PO</button>
+                        }
                     </div>
                 </div>
             </div>
-            <div className='p-4'>
+            <div className='invnetoryTable p-4'>
                 <span className='redText'>*Current stock quantity is below the minimum stock quantity required.</span>
                 <table className="table table-responsive mt-2">
                     <thead>
@@ -388,7 +501,7 @@ export default function Products() {
                                         <FontAwesomeIcon icon={faTrash} className='cursor-pointer text-white me-3' title="Delete item" onClick={() => handleDeleteProduct(product?.id)} />
                                         <img src={Images.utilization} alt="utilization" className='cursor-pointer text-white' style={{ height: '25px' }} title='Add utilization quantity' onClick={() => { setShowUtlizationPopup(true); setInventoryId(product?.id) }} />
                                     </td>
-                                    <td><img src={Images.poIcon} alt="po-icon" className='cursor-pointer' title="Generate PO" style={{ height: '20px' }} onClick={() => { setShowPoModal(true); handleGeneratePo(product?.id) }} /></td>
+                                    <td><img src={Images.poIcon} alt="po-icon" className='cursor-pointer' title="Generate PO" style={{ height: '20px' }} onClick={() => { setShowPoModal(true); handleGeneratePo(product?.id); setPreviewPo(false); setPreviewErrorMsg('') }} /></td>
                                 </tr>
                             ))
                         ) : (

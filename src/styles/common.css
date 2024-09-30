@@ -62,7 +62,7 @@
   padding: 10px 30px 10px 30px;
   font-weight: 600;
 }
-.table thead tr th {
+.invnetoryTable table thead tr th {
   background-color: #050854;
   color: white;
   font-weight: 400;
@@ -70,7 +70,7 @@
   font-size: 15px;
   letter-spacing: 1px;
 }
-.table tbody tr td {
+.invnetoryTable  table tbody tr td {
   background-color: #03053d;
   color: white;
   font-weight: 300;
@@ -78,13 +78,13 @@
   font-size: 14px;
   letter-spacing: 1px;
 }
-.table thead th {
+.invnetoryTable table thead th {
   border-bottom: 1px solid #484155;
 }
-.table tbody td {
+.invnetoryTable table tbody td {
   border-bottom: 1px solid #484155;
 }
-.table tbody tr.redText td {
+.invnetoryTable table tbody tr.redText td {
   color: red;
 }
 .redText {
@@ -113,4 +113,7 @@ input[type="checkbox"] {
   width: 1.1em;
   height: 1.1rem;
   accent-color: #EAEAEA4D;
+}
+.purchaseOrderTable table thead th {
+  background-color: #f4f4f4;
 }

@@ -124,7 +124,7 @@ export default function Vendors() {
           </div>
         </div>
       </div>
-      <div className='p-4'>
+      <div className='invnetoryTable p-4'>
         <table className="table table-responsive mt-2">
           <thead>
             <tr>
