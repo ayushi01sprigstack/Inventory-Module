@@ -436,11 +436,6 @@ export default function Products() {
                 ]
             })
         }
-        if (isMultipleGenerationPO && currentIndex + 1 == selectedIdsQueue.length) {
-            setIsMultipleGenarationPO(false);
-        }
-        setShowPoModal(false);
-        setPreviewPo(false);
         try {
             const result = await postAPI('/generate-purchase-order', raw);
             if (!result || result == "") {
@@ -456,6 +451,11 @@ export default function Products() {
                         setSelectedInventoryIds([]);
                         setSelectedIdsQueue([]);
                         setCurrentIndex(0);
+                        if (isMultipleGenerationPO && currentIndex + 1 == selectedIdsQueue.length) {
+                            setIsMultipleGenarationPO(false);
+                        }
+                        setShowPoModal(false);
+                        setPreviewPo(false);
                     }, 2500);
                 }
                 else {
@@ -484,14 +484,6 @@ export default function Products() {
             resetForm({ reOrderQuantity: '' });
             setPreviewPo(false);
         }
-        // else {
-        //     saveGeneratePO(reOrderQuantities);
-        //     resetForm({ reOrderQuantity: '' });
-        //     setShowPoModal(false);
-        //     setCurrentIndex(0);
-        //     setSelectedIdsQueue([]);
-        //     setSelectedInventoryIds([]);
-        // }
     };
 
     const handleGenerateMultiplePo = () => {
