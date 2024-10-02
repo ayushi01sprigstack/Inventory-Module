@@ -61,6 +61,8 @@ export default function Products() {
     const [selectedIdsQueue, setSelectedIdsQueue] = useState([]);
     const [isMultipleGenerationPO, setIsMultipleGenarationPO] = useState(false);
     const [reOrderQuantities, setReOrderQuantities] = useState([]);
+    const [usageHistoryDetails, setUsageHistoryDetails] = useState([]);
+    const [showUsageHistory, setShowUsageHistory] = useState(false);
 
     useEffect(() => {
         let currentIndex = 0;
@@ -230,7 +232,7 @@ export default function Products() {
         }
     }
 
-    const handleGeneratePo = async (productId) => {
+    const getInventoryDataById = async (productId) => {
         setLoading(true);
         try {
             const result = await getAPI(`/get-inventory-details/${productId}`);
@@ -254,7 +256,8 @@ export default function Products() {
                     vendorContactNum: responseRs?.vendor?.contact_num,
                     address: responseRs?.vendor?.address,
                     companyName: responseRs?.vendor?.company_name
-                }))
+                }));
+                setUsageHistoryDetails(responseRs?.usage_history)
                 setLoading(false);
             }
         }
@@ -299,7 +302,6 @@ export default function Products() {
                                 <p><strong>Company Name:</strong> {poDetails?.companyName}</p>
                             </div>
                         </div>
-                        <hr />
                         <h5 className='text-center fw-bold text-decoration-underline'>Generate PO</h5>
                     </>
                 )}
@@ -310,19 +312,19 @@ export default function Products() {
                         if (isMultipleGenerationPO) {
                             if (currentIndex + 1 == selectedIdsQueue.length) {
                                 setReOrderQuantities(updatedReOrderQuantities);
-                                saveGeneratePO(updatedReOrderQuantities,values);
+                                saveGeneratePO(updatedReOrderQuantities, values);
                             }
                             else {
                                 handleNext(resetForm, values);
                             }
                         }
                         else {
-                            saveGeneratePO(updatedReOrderQuantities,values);
+                            saveGeneratePO(updatedReOrderQuantities, values);
                         }
                     }}
                 >
                     {({ values, validateForm }) => (
-                        <Form className={`${previewPo ? '' : 'pt-4 mt-2'}`} onKeyDown={(e) => {
+                        <Form className={`${previewPo ? '' : 'pt-3 mt-2'}`} onKeyDown={(e) => {
                             if (e.key == 'Enter') {
                                 e.preventDefault();
                             }
@@ -343,7 +345,6 @@ export default function Products() {
 
                             {previewPo && (
                                 <>
-                                    {/* <h4 className='fw-bold text-center'>Preview PO Details</h4> */}
                                     <div className="preview-section p-3 mb-3 border rounded p-4">
                                         <h3 className='fw-bold mb-3 mt-3 p-1 text-center'>Purchase Order</h3>
                                         <hr />
@@ -369,19 +370,19 @@ export default function Products() {
                                                         <td>{poDetails?.inventoryName}</td>
                                                         <td>{values?.reOrderQuantity}</td>
                                                         <td>{poDetails?.price}</td>
-                                                        <td>{(poDetails?.price * values?.reOrderQuantity || 0)}</td>
+                                                        <td>₹{(poDetails?.price * values?.reOrderQuantity || 0)}</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
                                         </div>
                                         <div className='text-end mt-4'>
-                                        <p><strong>Total Price: </strong>{(poDetails?.price * values?.reOrderQuantity || 0)}</p>
+                                            <p><strong>Total Price: </strong>&nbsp;₹{(poDetails?.price * values?.reOrderQuantity || 0)}</p>
                                         </div>
                                     </div>
                                 </>
                             )}
-                            <div className='text-danger text-center'>{previewErrorMsg}</div>
-                            <div className="text-end mt-5">
+                            <div className='text-danger'>{previewErrorMsg}</div>
+                            {/* <div className="text-end mt-5">
                                 {!previewPo ? (
                                     <button type="button" className='saveBtn text-white' style={{ background: '#303260' }} onClick={() => handlePreviewPo(validateForm)}>
                                         {previewPo ? 'Hide Preview' : 'Preview PO'}
@@ -394,6 +395,13 @@ export default function Products() {
                                         </button>
                                     </div>
                                 )}
+                            </div> */}
+                            <div className="text-end mt-4">
+                                <button type="button" className='saveBtn text-white' style={{ background: '#303260',padding:'10px 15px' }} onClick={() => handlePreviewPo(validateForm)}> {previewPo ? 'Edit quantity' : 'Preview PO'}</button>
+                            </div>
+                            <div className='text-end mt-4'>
+                                <button className='cancelBtn' type="button" onClick={() => setShowPoModal(false)}> Close</button>
+                                <button className='saveBtn text-white ms-2' type="submit" style={{ background: '#303260' }}> {currentIndex + 1 == selectedIdsQueue.length || selectedInventoryIds.length == 0 ? 'Save' : 'Save and Next'}</button>
                             </div>
                         </Form>
                     )}
@@ -401,19 +409,19 @@ export default function Products() {
             </>
         )
     }
-    const saveGeneratePO = async (updatedReOrderQuantities,values) => {
-        setLoading(true);        
+    const saveGeneratePO = async (updatedReOrderQuantities, values) => {
+        setLoading(true);
         const inventoryToVendorMap = products.reduce((acc, product) => {
             acc[product.id] = product.vendor_id;
-            return acc; 
+            return acc;
         }, {});
         let raw;
         if (isMultipleGenerationPO) {
             raw = JSON.stringify({
                 vendorInventoryDetails: selectedIdsQueue.map((inventoryId, index) => ({
-                    vendor_id: inventoryToVendorMap[inventoryId] || null, 
+                    vendor_id: inventoryToVendorMap[inventoryId] || null,
                     inventory_id: inventoryId,
-                    reminder_quantity:  updatedReOrderQuantities[index] || 0,
+                    reminder_quantity: updatedReOrderQuantities[index] || 0,
                 })),
             })
         }
@@ -428,8 +436,6 @@ export default function Products() {
                 ]
             })
         }
-
-        console.log(raw);
         if (isMultipleGenerationPO && currentIndex + 1 == selectedIdsQueue.length) {
             setIsMultipleGenarationPO(false);
         }
@@ -474,10 +480,10 @@ export default function Products() {
         if (currentIndex + 1 < selectedIdsQueue.length) {
             const nextIndex = currentIndex + 1;
             setCurrentIndex(nextIndex);
-            handleGeneratePo(selectedIdsQueue[nextIndex]);
+            getInventoryDataById(selectedIdsQueue[nextIndex]);
             resetForm({ reOrderQuantity: '' });
             setPreviewPo(false);
-        } 
+        }
         // else {
         //     saveGeneratePO(reOrderQuantities);
         //     resetForm({ reOrderQuantity: '' });
@@ -494,11 +500,39 @@ export default function Products() {
         if (selectedInventoryIds.length > 1) {
             setSelectedIdsQueue(selectedInventoryIds);
             setCurrentIndex(0);
-            handleGeneratePo(selectedInventoryIds[0]);
+            getInventoryDataById(selectedInventoryIds[0]);
             setShowPoModal(true);
         }
     }
 
+    const modalBodyUsageHistory = () => {
+        return (
+            <>
+                <p className='commonColor fw-medium'>Item name:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetails?.inventoryName}</span></p>
+                <p className='commonColor fw-medium mb-2'>Usage History</p>
+                <div className='utilizationTable'>
+                <table className='table table-responsive table-bordered'>
+                    <thead>
+                        <tr>
+                            <th scope="col" className='cursor-pointer'>Date</th>
+                            <th scope="col" className='cursor-pointer'>Quantity used</th>
+                            <th scope="col" className='cursor-pointer'>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {usageHistoryDetails.map((usage) => (
+                            <tr key={usage.id}>
+                                <td>{usage?.used_date}</td>
+                                <td>{usage?.quantity }</td>
+                                <td>{usage?.usage_purpose?usage?.usage_purpose:'-'}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                </div>
+            </>
+        )
+    }
     return (
         <>
             {showAlerts}
@@ -541,7 +575,7 @@ export default function Products() {
                                 <tr key={product?.id} className={product?.purchaseOrderFlag == 1 ? 'redText' : ''}>
                                     <td><input type="checkbox" className='cursor-pointer' checked={selectedInventoryIds.includes(product?.id)} onChange={() => handleSelectInventory(product?.id)} /></td>
                                     <td>{product?.sku}</td>
-                                    <td>{product?.name}</td>
+                                    <td className='text-decoration-underline cursor-pointer' onClick={() => { setShowUsageHistory(true); getInventoryDataById(product?.id) }}>{product?.name}</td>
                                     <td>{product?.quantity}</td>
                                     <td>{product?.reminder_quantity}</td>
                                     <td>{product?.price}</td>
@@ -552,8 +586,7 @@ export default function Products() {
                                         <img src={Images.utilization} alt="utilization" className='cursor-pointer text-white' style={{ height: '25px' }} title='Add utilization quantity' onClick={() => { setShowUtlizationPopup(true); setInventoryId(product?.id) }} />
                                     </td>
                                     <td><img src={Images.poIcon} alt="po-icon" className='cursor-pointer' title="Generate PO" style={{ height: '20px' }}
-                                        onClick={() => { setShowPoModal(true); handleGeneratePo(product?.id); setPreviewPo(false); setPreviewErrorMsg('') }}
-                                    // onClick={() => navigate('/generate-purchase-order', { state: { inventoryID: product?.id } })}
+                                        onClick={() => { setShowPoModal(true); getInventoryDataById(product?.id); setPreviewPo(false); setPreviewErrorMsg('') }}
                                     /></td>
                                 </tr>
                             ))
@@ -568,7 +601,7 @@ export default function Products() {
                     </tbody>
                 </table>
             </div>
-            <div className='d-flex justify-content-center'>
+            <div className='position-fixed bottom-0 start-50'>
                 <PaginationComp
                     totalItems={totalItems}
                     itemsPerPage={itemsPerPage}
@@ -578,6 +611,7 @@ export default function Products() {
             </div>
             <Popup show={showUtlizationPopup} handleClose={() => setShowUtlizationPopup(false)} size="md" modalHeader="Add Utilization Quantity" modalBody={modalBody()} modalFooter={false} />
             <Popup show={showPoModal} handleClose={() => setShowPoModal(false)} size="lg" modalHeader="Generate Purchase Order" modalBody={modalBodyPurchaseOrder()} modalFooter={false} />
+            <Popup show={showUsageHistory} handleClose={() => setShowUsageHistory(false)} size="md" modalHeader="Utilization Overview" customTitle='customTitle' modalBody={modalBodyUsageHistory()} modalFooter={false} />
         </>
     )
 }

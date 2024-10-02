@@ -117,3 +117,15 @@ input[type="checkbox"] {
 .purchaseOrderTable table thead th {
   background-color: #f4f4f4;
 }
+.commonColor{
+  color:#03053D;
+}
+.utilizationTable table thead th{
+  background-color: #050854;
+  color: white;
+  font-weight: 500;
+  border-width: 0;
+}
+.customTitle{
+  color:#03053D;
+}
