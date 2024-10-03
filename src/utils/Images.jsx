@@ -13,5 +13,6 @@ const Images = {
     sortIcon : new URL('../assets/images/sort-icon.svg', import.meta.url).href,
     editIcon: new URL('../assets/images/edit.svg', import.meta.url).href,
     deleteIcon: new URL('../assets/images/delete.svg', import.meta.url).href,
+    editIconBlack: new URL('../assets/images/black-edit-icon.svg', import.meta.url).href,
 }
 export default Images

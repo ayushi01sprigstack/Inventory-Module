@@ -124,7 +124,14 @@ input[type="checkbox"] {
 .purchaseOrderTable table thead th {
   background-color: #050854;
   color: white;
-  font-weight: 500;
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+.purchaseOrderTable table tbody td {
+  color: #2c2c2c;
+  font-weight: 400;
+  font-size: 14px;
 }
 .commonColor {
   color: #03053d;
@@ -166,7 +173,7 @@ input[type="checkbox"] {
 .modalBodyHeading {
   font-size: 18px;
   font-weight: 500;
-  color: #03053D;
+  color: #03053d;
 }
 .modalBodyParagraph {
   font-size: 16px;
@@ -188,13 +195,22 @@ input[type="checkbox"] {
   border-radius: 4px;
   padding: 8px 15px;
 }
-.customSelect{
-  border: 1px solid #AEAEAE;
+.customSelect {
+  border: 1px solid #aeaeae;
   border-radius: 8px;
-  color: #2C2C2C;
+  color: #2c2c2c;
   font-size: 14px;
   line-height: 1.5;
   outline: none;
-  padding: 0.5rem 0.7rem;;
+  padding: 0.5rem 0.7rem;
   width: 100%;
+}
+.submitBtn {
+  border: none;
+  background-color: #050854;
+  border-radius: 4px;
+  color: white;
+  padding: 7px 20px;
+  font-size: 14px;
+  font-weight: 600;
 }
