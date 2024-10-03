@@ -9,6 +9,9 @@ const Images = {
     notification: new URL('../assets/images/notification.svg', import.meta.url).href,
     addIcon: new URL('../assets/images/add-icon.svg', import.meta.url).href,
     utilization: new URL('../assets/images/utilization.svg', import.meta.url).href,
-    poIcon:  new URL('../assets/images/po-icon.svg', import.meta.url).href,
+    poIcon: new URL('../assets/images/po-icon.svg', import.meta.url).href,
+    sortIcon : new URL('../assets/images/sort-icon.svg', import.meta.url).href,
+    editIcon: new URL('../assets/images/edit.svg', import.meta.url).href,
+    deleteIcon: new URL('../assets/images/delete.svg', import.meta.url).href,
 }
 export default Images

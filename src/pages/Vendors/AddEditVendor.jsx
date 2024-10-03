@@ -47,6 +47,7 @@ export default function AddEditVendor() {
             }
             catch (error) {
                 console.error(error);
+                setLoading(false);
             }
         }
     }
@@ -87,6 +88,7 @@ export default function AddEditVendor() {
         }
         catch (error) {
             console.error(error);
+            setLoading(false);
         }
     }
 
@@ -95,7 +97,7 @@ export default function AddEditVendor() {
             {showAlerts}
             {loading ? <ShowLoader /> : <HideLoader />}
             <div style={{ padding: '20px' }}>
-                <div className="row p-4">
+                <div className="row">
                     <div className='col-md-6 offset-md-3'>
                         <div className='text-center'>
                             <h4 className='heading pt-2'>{vendorId ? 'Edit Vendor' : 'Add Vendor'}</h4>

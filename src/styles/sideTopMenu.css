@@ -23,7 +23,7 @@
   margin-left: 250px;
 }
 .topmenu-container {
-  height: 70px;
+  height: 60px;
   background-color: #303260;
   display: flex;
   align-items: center;
@@ -32,7 +32,7 @@
 }
 .content-wrapper {
   flex-grow: 1;
-  padding: 2px;
+  /* padding: 0px; */
   background-color: #03053d;
   overflow-y: auto;
 }
@@ -49,25 +49,6 @@
   background-color: #2e3361;
   width: 100%;
 }
-.search-icon {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 20px;
-}
-.searchInput {
-  padding-left: 45px !important;
-  background-color: #03053d !important;
-  color: #c4f2ea4d !important;
-  border-radius: 4px !important;
-  border: none !important;
-}
-.searchInput::placeholder {
-  color: #c4f2ea4d !important;
-  opacity: 1;
-}
-
 .side-menu .nav-pills .nav-link.active,
 .nav-pills .show > .nav-link {
   background-color: #8b98b1;
@@ -79,4 +60,10 @@
 }
 .imgClass{
   height: 25px;
+}
+.mainheading{
+  color: white;
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: 0.5px;
 }

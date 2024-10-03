@@ -1,43 +1,15 @@
 import React from 'react'
-import { Pagination } from 'react-bootstrap';
+import Pagination from 'rc-pagination';
+import 'rc-pagination/assets/index.css';
 import '../styles/pagination.css'
 
-export default function PaginationComp({ totalItems, itemsPerPage, currentPage, onPageChange }) {
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    if (totalItems <= itemsPerPage) {
-        return null;  
-    }
-
-    const handlePageChange = (pageNumber) => {
-        if (pageNumber !== currentPage) {
-            onPageChange(pageNumber);
-        }
-    };
-
-    const paginationItems = [];
-    for (let number = 1; number <= totalPages; number++) {
-        paginationItems.push(
-            <Pagination.Item
-                key={number}
-                active={number == currentPage}
-                onClick={() => handlePageChange(number)}
-            >
-                {number}
-            </Pagination.Item>,
-        );
-    }
+export default function PaginationComp({currentPage, totalItems, pageSize, onChange}) {
     return (
-        <Pagination>
-            <Pagination.Prev
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage == 1}
-            />
-            {paginationItems}
-            <Pagination.Next
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage == totalPages}
-            />
-        </Pagination>
-
+        <Pagination
+            current={currentPage} // The current page
+            total={totalItems}    // Total number of items
+            pageSize={pageSize}   // Number of items per page
+            onChange={onChange}   // Callback function when page changes
+        />
     )
 }

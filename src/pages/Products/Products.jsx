@@ -4,7 +4,7 @@ import useApiService from '../../services/ApiService';
 import ShowLoader from '../../components/loader/ShowLoader';
 import HideLoader from '../../components/loader/HideLoader';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPenToSquare, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
 import AlertComp from '../../components/AlertComp';
 import Images from '../../utils/Images';
@@ -12,18 +12,18 @@ import PaginationComp from '../../components/PaginationComp';
 import { typewatch } from '../../utils/js/Common';
 import Popup from '../../components/Popup';
 import { Field, Formik, Form, ErrorMessage, } from 'formik';
-import * as Yup from 'yup';
+import GeneratePoValidationSchema from './GeneratePoValidationSchema';
+import UtilizationValidationSchema from './UtilizationValidationSchema';
+import DynamicSearchComp from '../../components/DynamicSearchComp';
 
 export default function Products() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [showAlerts, setShowAlerts] = useState(false);
     const [products, setProducts] = useState([]);
-    const [placeholder, setPlaceholder] = useState('Search by SKU');
     const placeholders = [
-        'Search by SKU',
-        'Search by Item Name',
-        'Search by Vendor Name',
+        'Search by Inventory',
+        'Search by Vendor',
     ];
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
@@ -42,7 +42,6 @@ export default function Products() {
     const [poDetails, setPoDetails] = useState({
         inventoryId: '',
         inventoryName: '',
-        sku: '',
         price: '',
         currentStock: '',
         description: '',
@@ -63,15 +62,8 @@ export default function Products() {
     const [reOrderQuantities, setReOrderQuantities] = useState([]);
     const [usageHistoryDetails, setUsageHistoryDetails] = useState([]);
     const [showUsageHistory, setShowUsageHistory] = useState(false);
+    const [allvendors, setAllVendors] = useState([]);
 
-    useEffect(() => {
-        let currentIndex = 0;
-        const intervalId = setInterval(() => {
-            setPlaceholder(placeholders[currentIndex]);
-            currentIndex = (currentIndex + 1) % placeholders.length;
-        }, 2000);
-        return () => clearInterval(intervalId);
-    }, []);
     useEffect(() => {
         getAllProducts(inventoryParamters.searchkey ? inventoryParamters.searchkey : null, inventoryParamters.sortKey || null);
     }, [currentPage])
@@ -99,8 +91,13 @@ export default function Products() {
             }
             catch (error) {
                 console.error(error);
+                setLoading(false);
             }
         }, searchkey != null ? 1000 : 0);
+    }
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
     }
 
     const handleDeleteProduct = async (productId) => {
@@ -128,8 +125,10 @@ export default function Products() {
                             getAllProducts(inventoryParamters.searchkey ? inventoryParamters.searchkey : null, inventoryParamters.sortKey || null);
                         }, 2500);
                     }
-                } catch (error) {
+                }
+                catch (error) {
                     console.error('Failed to delete product:', error);
+                    setLoading(false);
                 }
             }
         })
@@ -155,33 +154,30 @@ export default function Products() {
             setSelectedInventoryIds([...selectedInventoryIds, id]);
         }
     }
-    const UtilizationValidationSchema = Yup.object().shape({
-        utilizationQty: Yup.number().required('Utilization quantity is required').positive('Quantity must be greater than 0').integer('Quantity must be an integer'),
-        date: Yup.date().required('Date is required').nullable()
-    });
+
     const modalBody = () => {
         return (
             <>
                 <Formik initialValues={{ utilizationQty: '', date: today, purpose: '' }} validationSchema={UtilizationValidationSchema} onSubmit={saveUtilizationQuantity} >
                     {() => (
-                        <Form className='pt-4 mt-2' onKeyDown={(e) => {
+                        <Form className='' onKeyDown={(e) => {
                             if (e.key == 'Enter') {
                                 e.preventDefault();
                             }
                         }}>
                             <div className="row">
                                 <div className="col-md-6 position-relative mb-3">
-                                    <label>Enter Utilization Quantity <span className='text-danger'>*</span></label>
+                                    <label className='font-14 fw-medium'>Enter Utilization Quantity <span className='text-danger'>*</span></label>
                                     <Field type="number" name="utilizationQty" className="form-control mt-2" min={0} />
                                     <ErrorMessage name="utilizationQty" component="div" className="text-start errorText" />
                                 </div>
                                 <div className="col-md-6 position-relative mb-3">
-                                    <label>Select Date <span className='text-danger'>*</span></label>
+                                    <label className='font-14 fw-medium'>Select Date <span className='text-danger'>*</span></label>
                                     <Field type="date" name="date" className="form-control mt-2" />
                                     <ErrorMessage name="date" component="div" className="text-start errorText" />
                                 </div>
                                 <div className="col-md-12 position-relative mb-3">
-                                    <label>Purpose</label>
+                                    <label className='font-14 fw-medium'>Purpose</label>
                                     <Field as="textarea" className="form-control mt-2" name='purpose' autoComplete='off' rows="2" />
                                 </div>
                             </div>
@@ -229,6 +225,7 @@ export default function Products() {
         }
         catch (error) {
             console.error(error);
+            setLoading(false);
         }
     }
 
@@ -245,17 +242,16 @@ export default function Products() {
                     ...prevState,
                     inventoryId: responseRs?.id || '',
                     inventoryName: responseRs?.name || '',
-                    sku: responseRs?.sku || '',
                     currentStock: responseRs?.quantity || '',
                     description: responseRs?.description || null,
                     categoryName: responseRs?.category?.name,
                     price: responseRs?.price || '',
-                    vendorID: responseRs?.vendor?.id || '',
-                    vendorName: responseRs?.vendor?.name || '',
-                    vendorEmail: responseRs?.vendor?.email || '',
-                    vendorContactNum: responseRs?.vendor?.contact_num,
-                    address: responseRs?.vendor?.address,
-                    companyName: responseRs?.vendor?.company_name
+                    vendorID: responseRs?.inventory_detail?.vendor_id || '',
+                    vendorName: responseRs?.inventory_detail?.vendor?.name || '',
+                    vendorEmail: responseRs?.inventory_detail?.vendor?.email || '',
+                    vendorContactNum: responseRs?.inventory_detail?.vendor?.contact_num,
+                    address: responseRs?.inventory_detail?.vendor?.address,
+                    companyName: responseRs?.inventory_detail?.vendor?.company_name
                 }));
                 setUsageHistoryDetails(responseRs?.usage_history)
                 setLoading(false);
@@ -263,11 +259,10 @@ export default function Products() {
         }
         catch (error) {
             console.error(error);
+            setLoading(false);
         }
     }
-    const GeneratePoValidationSchema = Yup.object().shape({
-        reOrderQuantity: Yup.number().required('Quantity is required').positive('Quantity must be greater than 0').integer('Quantity must be an integer'),
-    });
+
 
     const handlePreviewPo = async (validateForm) => {
         const formErrors = await validateForm();
@@ -281,131 +276,62 @@ export default function Products() {
     const modalBodyPurchaseOrder = () => {
         return (
             <>
-                {!previewPo && (
-                    <>
-                        <div className="row">
-                            <div className="col-md-6">
-                                <h5 className='fw-bold mb-4 text-decoration-underline'>Inventory Details</h5>
-                                <p><strong>Category:</strong> {poDetails?.categoryName}</p>
-                                <p><strong>Inventory Name:</strong> {poDetails?.inventoryName}</p>
-                                <p><strong>SKU:</strong> {poDetails?.sku}</p>
-                                <p><strong>Current Stock:</strong> {poDetails?.currentStock}</p>
-                                <p><strong>Price:</strong> {poDetails?.price}</p>
-                                <p><strong>Description:</strong> {poDetails?.description ? poDetails?.description : '-'}</p>
-                            </div>
-                            <div className="col-md-6">
-                                <h5 className='fw-bold mb-4 text-decoration-underline'>Vendor Details</h5>
-                                <p><strong>Name:</strong> {poDetails?.vendorName}</p>
-                                <p><strong>Email:</strong> {poDetails?.vendorEmail}</p>
-                                <p><strong>Contact Number:</strong> {poDetails?.vendorContactNum}</p>
-                                <p><strong>Address:</strong> {poDetails?.address}</p>
-                                <p><strong>Company Name:</strong> {poDetails?.companyName}</p>
-                            </div>
-                        </div>
-                        <h5 className='text-center fw-bold text-decoration-underline'>Generate PO</h5>
-                    </>
-                )}
-                <Formik initialValues={{ reOrderQuantity: '' }} validationSchema={GeneratePoValidationSchema}
-                    onSubmit={(values, { resetForm }) => {
-                        const updatedReOrderQuantities = [...reOrderQuantities];
-                        updatedReOrderQuantities[currentIndex] = values.reOrderQuantity;
-                        if (isMultipleGenerationPO) {
-                            if (currentIndex + 1 == selectedIdsQueue.length) {
-                                setReOrderQuantities(updatedReOrderQuantities);
-                                saveGeneratePO(updatedReOrderQuantities, values);
-                            }
-                            else {
-                                handleNext(resetForm, values);
-                            }
-                        }
-                        else {
-                            saveGeneratePO(updatedReOrderQuantities, values);
-                        }
-                    }}
-                >
-                    {({ values, validateForm }) => (
-                        <Form className={`${previewPo ? '' : 'pt-3 mt-2'}`} onKeyDown={(e) => {
+                <h5 className='modalBodyHeading'>Vendor Information :</h5>
+                <Formik initialValues={{ selectedVendor: '' }} validationSchema={GeneratePoValidationSchema} enableReinitialize={true} onSubmit={saveGeneratePO} >
+                    {() => (
+                        <Form className='' onKeyDown={(e) => {
                             if (e.key == 'Enter') {
                                 e.preventDefault();
                             }
                         }}>
-                            {!previewPo && (
-                                <div className="row mb-3">
-                                    <div className="col-md-6 position-relative">
-                                        <label>Enter Quantity to reoder <span className='text-danger'>*</span></label>
-                                        <Field type="number" name="reOrderQuantity" className="form-control mt-2" min={0} />
-                                        <ErrorMessage name="reOrderQuantity" component="div" className="text-start errorText" />
-                                    </div>
-                                    <div className="col-md-6 position-relative">
-                                        <label>Price</label>
-                                        <Field type="number" value={poDetails?.price} className="form-control mt-2" min={0} step="0.01" disabled />
-                                    </div>
+                            <div className="row">
+                                <div className="col-md-4 position-relative mb-3">
+                                    <label className='font-14 fw-medium'>Vendor Name: <span className='text-danger'>*</span></label>
+                                    <Field as="select" name="selectedVendor" className="customSelect">
+                                        <option value="" className=''>Select Vendor</option>
+                                        {allvendors.map((vendor) => (
+                                            <option key={vendor?.id} value={vendor?.id} className=''>{vendor?.name}</option>
+                                        ))}
+                                    </Field>
+                                    <ErrorMessage name='selectedVendor' component="div" className="text-start errorText" />
                                 </div>
-                            )}
-
-                            {previewPo && (
-                                <>
-                                    <div className="preview-section p-3 mb-3 border rounded p-4">
-                                        <h3 className='fw-bold mb-3 mt-3 p-1 text-center'>Purchase Order</h3>
-                                        <hr />
-                                        <div className='text-end p-2'>
-                                            <p><strong>Generated on:</strong> {today}</p>
-                                        </div>
-                                        <div className='mt-1 p-2'>
-                                            <p><strong>Vendor Name: </strong> {poDetails?.vendorName}</p>
-                                            <p><strong>Address:</strong> {poDetails?.address}</p>
-                                        </div>
-                                        <div className='purchaseOrderTable'>
-                                            <table className='table table-responsive table-bordered'>
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col" className='cursor-pointer'>Item Name</th>
-                                                        <th scope="col" className='cursor-pointer'>Quantity</th>
-                                                        <th scope="col" className='cursor-pointer'>Price</th>
-                                                        <th scope="col" className='cursor-pointer'>Total Price</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>{poDetails?.inventoryName}</td>
-                                                        <td>{values?.reOrderQuantity}</td>
-                                                        <td>{poDetails?.price}</td>
-                                                        <td>₹{(poDetails?.price * values?.reOrderQuantity || 0)}</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div className='text-end mt-4'>
-                                            <p><strong>Total Price: </strong>&nbsp;₹{(poDetails?.price * values?.reOrderQuantity || 0)}</p>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-                            <div className='text-danger'>{previewErrorMsg}</div>
-                            {/* <div className="text-end mt-5">
-                                {!previewPo ? (
-                                    <button type="button" className='saveBtn text-white' style={{ background: '#303260' }} onClick={() => handlePreviewPo(validateForm)}>
-                                        {previewPo ? 'Hide Preview' : 'Preview PO'}
-                                    </button>
-                                ) : (
-                                    <div>
-                                        <button className='cancelBtn' type="button" onClick={() => { setShowPoModal(false); setPreviewPo(false) }}>Cancel</button>
-                                        <button className='saveBtn text-white ms-2' type="submit" style={{ background: '#303260' }}>
-                                            {currentIndex + 1 === selectedIdsQueue.length || selectedInventoryIds.length === 0 ? 'Save' : 'Save and Next'}
-                                        </button>
-                                    </div>
-                                )}
-                            </div> */}
-                            <div className="text-end mt-4">
-                                <button type="button" className='saveBtn text-white' style={{ background: '#303260',padding:'10px 15px' }} onClick={() => handlePreviewPo(validateForm)}> {previewPo ? 'Edit quantity' : 'Preview PO'}</button>
-                            </div>
-                            <div className='text-end mt-4'>
-                                <button className='cancelBtn' type="button" onClick={() => setShowPoModal(false)}> Close</button>
-                                <button className='saveBtn text-white ms-2' type="submit" style={{ background: '#303260' }}> {currentIndex + 1 == selectedIdsQueue.length || selectedInventoryIds.length == 0 ? 'Save' : 'Save and Next'}</button>
+                                <div className="col-md-4 position-relative mb-3">
+                                    <label className='font-14 fw-medium'>Phone Number: </label>
+                                    <input type="text" className='form-control' />
+                                </div>
+                                <div className="col-md-4 position-relative mb-3">
+                                    <label className='font-14 fw-medium'>Email Id :</label>
+                                    <input type="text" className='form-control' />
+                                </div>
+                                <div className="col-md-12 position-relative mb-3">
+                                    <label className='font-14 fw-medium'>Address:</label>
+                                    <input type="text" className='form-control' />
+                                </div>
                             </div>
                         </Form>
                     )}
                 </Formik>
+                <h5 className='modalBodyHeading'>Item List Details :</h5>
+                <div className='purchaseOrderTable'>
+                    <table className='table table-responsive table-bordered'>
+                        <thead>
+                            <tr>
+                                <th scope="col" className='cursor-pointer'>Item Name</th>
+                                <th scope="col" className='cursor-pointer'>Quantity</th>
+                                <th scope="col" className='cursor-pointer'>Price</th>
+                                <th scope="col" className='cursor-pointer'>Total Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{poDetails?.inventoryName}</td>
+                                <td>{}</td>
+                                <td>{poDetails?.price}</td>
+                                <td>₹{(poDetails?.price)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </>
         )
     }
@@ -436,6 +362,11 @@ export default function Products() {
                 ]
             })
         }
+        if (isMultipleGenerationPO && currentIndex + 1 == selectedIdsQueue.length) {
+            setIsMultipleGenarationPO(false);
+        }
+        setShowPoModal(false);
+        setPreviewPo(false);
         try {
             const result = await postAPI('/generate-purchase-order', raw);
             if (!result || result == "") {
@@ -451,11 +382,6 @@ export default function Products() {
                         setSelectedInventoryIds([]);
                         setSelectedIdsQueue([]);
                         setCurrentIndex(0);
-                        if (isMultipleGenerationPO && currentIndex + 1 == selectedIdsQueue.length) {
-                            setIsMultipleGenarationPO(false);
-                        }
-                        setShowPoModal(false);
-                        setPreviewPo(false);
                     }, 2500);
                 }
                 else {
@@ -469,6 +395,7 @@ export default function Products() {
         }
         catch (error) {
             console.error(error);
+            setLoading(false);
         }
     }
     const handleNext = (resetForm, values) => {
@@ -486,6 +413,24 @@ export default function Products() {
         }
     };
 
+    const getVendors = async () => {
+        setLoading(true);
+        try {
+            const result = await getAPI('/get-vendors-data');
+            if (!result || result == '') {
+                alert('Something went wrong');
+            }
+            else {
+                const responseRs = JSON.parse(result);
+                setLoading(false);
+                setAllVendors(responseRs);
+            }
+        }
+        catch (error) {
+            console.error(error);
+            setLoading(false);
+        }
+    }
     const handleGenerateMultiplePo = () => {
         setIsMultipleGenarationPO(true);
         setPreviewErrorMsg('')
@@ -500,27 +445,36 @@ export default function Products() {
     const modalBodyUsageHistory = () => {
         return (
             <>
-                <p className='commonColor fw-medium'>Item name:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetails?.inventoryName}</span></p>
-                <p className='commonColor fw-medium mb-2'>Usage History</p>
+                <p className='commonColor fw-semibold'>Item name:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetails?.inventoryName}</span></p>
+                <p className='commonColor fw-semibold mb-2'>Usage History</p>
                 <div className='utilizationTable'>
-                <table className='table table-responsive table-bordered'>
-                    <thead>
-                        <tr>
-                            <th scope="col" className='cursor-pointer'>Date</th>
-                            <th scope="col" className='cursor-pointer'>Quantity used</th>
-                            <th scope="col" className='cursor-pointer'>Purpose</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {usageHistoryDetails.map((usage) => (
-                            <tr key={usage.id}>
-                                <td>{usage?.used_date}</td>
-                                <td>{usage?.quantity }</td>
-                                <td>{usage?.usage_purpose?usage?.usage_purpose:'-'}</td>
+                    <table className='table table-responsive table-bordered'>
+                        <thead>
+                            <tr>
+                                <th scope="col" className='cursor-pointer'>Date</th>
+                                <th scope="col" className='cursor-pointer'>Quantity used</th>
+                                <th scope="col" className='cursor-pointer'>Purpose</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {usageHistoryDetails.length != 0 ? (
+                                usageHistoryDetails.map((usage) => (
+                                    <tr key={usage.id}>
+                                        <td>{usage?.used_date}</td>
+                                        <td>{usage?.quantity}</td>
+                                        <td>{usage?.usage_purpose ? usage?.usage_purpose : '-'}</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="3" className="text-center">No records found</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+                <div className='text-end'>
+                    <button className='cancelBtn' onClick={() => setShowUsageHistory(false)}> Close</button>
                 </div>
             </>
         )
@@ -529,34 +483,32 @@ export default function Products() {
         <>
             {showAlerts}
             {loading ? <ShowLoader /> : <HideLoader />}
-            <h4 className='pageheader p-2 m-0'>Inventory Management</h4>
-            <hr className='horizontal-line' />
-            <div className='headerWrapper mt-3'>
+            <div className='mt-1' style={{ padding: "5px 20px" }}>
                 <div className="row align-items-center ps-3">
                     <div className="col-4 p-1 position-relative">
-                        <img src={Images.searchIcon} alt="search-icon" className="search-icon" style={{ left: '10px', top: '53%' }} />
-                        <input type="text" className="form-control" placeholder={placeholder} style={{ padding: '.375rem 1.75rem' }} onChange={(e) => { setInventoryParamters({ ...inventoryParamters, searchkey: e.target.value }); getAllProducts(e.target.value, inventoryParamters.sortKey) }} />
+                        <img src={Images.searchIcon} alt="search-icon" className="search-icon" />
+                        <DynamicSearchComp placeholders={placeholders} onChange={(e) => { setInventoryParamters({ ...inventoryParamters, searchkey: e.target.value }); getAllProducts(e.target.value, inventoryParamters.sortKey) }} />
                     </div>
                     <div className="col-8 text-end">
-                        <button className='productBtn' onClick={() => navigate('/add-update-inventory')}> <img src={Images.addIcon} alt="addIcon" className='me-1' />Add Item</button>
+                        <button className='productBtn' onClick={() => navigate('/add-update-inventory')}> <img src={Images.addIcon} alt="addIcon" className='me-1' />Add Inventory</button>
                         {selectedInventoryIds.length > 1 &&
                             <button className='productBtn' onClick={handleGenerateMultiplePo}> <img src={Images.poIcon} alt="po-icon" className='me-1 ms-3' style={{ height: '20px' }} />Generate PO</button>
                         }
+                        <br />
+                        <span className='redText'>*Current stock quantity is below the minimum stock quantity required.</span>
                     </div>
                 </div>
             </div>
-            <div className='invnetoryTable p-4'>
-                <span className='redText'>*Current stock quantity is below the minimum stock quantity required.</span>
+            <div className='invnetoryTable mt-2'>
                 <table className="table table-responsive mt-2">
                     <thead>
                         <tr>
                             <th><input type="checkbox" className='cursor-pointer' onChange={handleSelectAll} checked={isAllSelected} /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('sku')}>Sku<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')}>Item Name<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('quantity')}>Quantity<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('reminder_quantity')}>Min Stock Quantity<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('price')}>Price<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('vendor_name')}>Vendor Name<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')}>Inventory <img src={Images.sortIcon} alt="sort-icon" className='ms-2' /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('quantity')}>Qty<img src={Images.sortIcon} alt="sort-icon" className='ms-2' /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('reminder_quantity')}>Min Stock Qty<img src={Images.sortIcon} alt="sort-icon" className='ms-2' /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('price')}>Price<img src={Images.sortIcon} alt="sort-icon" className='ms-2' /></th>
+                            <th scope="col" className=''>Vendor</th>
                             <th scope="col" className=''>Action</th>
                             <th scope="col" className=''>PO</th>
                         </tr>
@@ -566,20 +518,22 @@ export default function Products() {
                             products.map((product) => (
                                 <tr key={product?.id} className={product?.purchaseOrderFlag == 1 ? 'redText' : ''}>
                                     <td><input type="checkbox" className='cursor-pointer' checked={selectedInventoryIds.includes(product?.id)} onChange={() => handleSelectInventory(product?.id)} /></td>
-                                    <td>{product?.sku}</td>
                                     <td className='text-decoration-underline cursor-pointer' onClick={() => { setShowUsageHistory(true); getInventoryDataById(product?.id) }}>{product?.name}</td>
                                     <td>{product?.quantity}</td>
                                     <td>{product?.reminder_quantity}</td>
                                     <td>{product?.price}</td>
-                                    <td>{product?.vendor_name}</td>
+                                    <td>{product?.inventory_detail?.vendor?.name}</td>
                                     <td>
-                                        <FontAwesomeIcon icon={faPenToSquare} className='cursor-pointer text-white me-3' title="Edit item" onClick={() => navigate('/add-update-inventory', { state: { productId: product?.id } })} />
-                                        <FontAwesomeIcon icon={faTrash} className='cursor-pointer text-white me-3' title="Delete item" onClick={() => handleDeleteProduct(product?.id)} />
-                                        <img src={Images.utilization} alt="utilization" className='cursor-pointer text-white' style={{ height: '25px' }} title='Add utilization quantity' onClick={() => { setShowUtlizationPopup(true); setInventoryId(product?.id) }} />
+                                        <img src={Images.editIcon} className='cursor-pointer text-white me-3' alt="edit" style={{ height: '15px' }} title="Edit item" onClick={() => navigate('/add-update-inventory', { state: { productId: product?.id } })} />
+                                        <img src={Images.deleteIcon} className='cursor-pointer text-white me-3' alt="delete" style={{ height: '15px' }} title="Delete item" onClick={() => handleDeleteProduct(product?.id)} />
+                                        <img src={Images.utilization} alt="utilization" className='cursor-pointer text-white' style={{ height: '22px' }} title='Add utilization quantity' onClick={() => { setShowUtlizationPopup(true); setInventoryId(product?.id) }} />
                                     </td>
-                                    <td><img src={Images.poIcon} alt="po-icon" className='cursor-pointer' title="Generate PO" style={{ height: '20px' }}
-                                        onClick={() => { setShowPoModal(true); getInventoryDataById(product?.id); setPreviewPo(false); setPreviewErrorMsg('') }}
-                                    /></td>
+                                    <td>
+                                        <img src={Images.poIcon} alt="po-icon" className='cursor-pointer' title="Generate PO" style={{ height: '20px' }}
+                                            onClick={() => { setShowPoModal(true); getInventoryDataById(product?.id); getVendors(); setPreviewPo(false); setPreviewErrorMsg('') }}
+                                        />
+                                        {/* <button className='poButton'  onClick={() => { setShowPoModal(true); getInventoryDataById(product?.id); setPreviewPo(false); setPreviewErrorMsg('') }}>Generate PO</button> */}
+                                    </td>
                                 </tr>
                             ))
                         ) : (
@@ -593,17 +547,17 @@ export default function Products() {
                     </tbody>
                 </table>
             </div>
-            <div className='position-fixed bottom-0 start-50'>
+            <div className='d-flex justify-content-center'>
                 <PaginationComp
-                    totalItems={totalItems}
-                    itemsPerPage={itemsPerPage}
                     currentPage={currentPage}
-                    onPageChange={setCurrentPage}
+                    totalItems={totalItems}
+                    pageSize={itemsPerPage}
+                    onChange={handlePageChange}
                 />
             </div>
-            <Popup show={showUtlizationPopup} handleClose={() => setShowUtlizationPopup(false)} size="md" modalHeader="Add Utilization Quantity" modalBody={modalBody()} modalFooter={false} />
-            <Popup show={showPoModal} handleClose={() => setShowPoModal(false)} size="lg" modalHeader="Generate Purchase Order" modalBody={modalBodyPurchaseOrder()} modalFooter={false} />
-            <Popup show={showUsageHistory} handleClose={() => setShowUsageHistory(false)} size="md" modalHeader="Utilization Overview" customTitle='customTitle' modalBody={modalBodyUsageHistory()} modalFooter={false} />
+            <Popup show={showUtlizationPopup} handleClose={() => setShowUtlizationPopup(false)} size="md" modalHeader="Add Utilization Quantity" modalBody={modalBody()} customTitle='modalTitle' modalFooter={false} />
+            <Popup show={showPoModal} handleClose={() => { setShowPoModal(false) }} size="lg" modalHeader="Generate Purchase Order" modalBody={modalBodyPurchaseOrder()} customTitle='modalTitle' modalFooter={false} />
+            <Popup show={showUsageHistory} handleClose={() => setShowUsageHistory(false)} size="md" modalHeader="Utilization Overview" customTitle='customTitle modalTitle' modalBody={modalBodyUsageHistory()} modalFooter={false} />
         </>
     )
 }

@@ -11,7 +11,6 @@ import AlertComp from '../../components/AlertComp';
 export default function AddEditProduct() {
     const [productDetails, setProductDetails] = useState({
         productName: '',
-        sku: '',
         selectedCategory: '',
         description: '',
         quantity: '',
@@ -55,6 +54,7 @@ export default function AddEditProduct() {
         }
         catch (error) {
             console.error(error);
+            setLoading(false);
         }
     }
     const getVendors = async () => {
@@ -75,6 +75,7 @@ export default function AddEditProduct() {
         }
         catch (error) {
             console.error(error);
+            setLoading(false);
         }
     }
     const getProductById = async () => {
@@ -87,23 +88,23 @@ export default function AddEditProduct() {
                 }
                 else {
                     const responseRs = JSON.parse(result);
-                    const vendorExists = categoriesAndVendors.vendors.length > 0 && categoriesAndVendors.vendors.some(vendor => vendor.id == responseRs.vendor_id);
+                    const vendorExists = categoriesAndVendors.vendors.length > 0 && categoriesAndVendors.vendors.some(vendor => vendor.id == responseRs.inventory_detail?.vendor_id);
                     setProductDetails(prevState => ({
                         ...prevState,
                         productName: responseRs?.name || '',
-                        sku: responseRs?.sku || '',
                         selectedCategory: responseRs?.category_id || '',
                         quantity: responseRs?.quantity || '',
                         minQuantity: responseRs?.reminder_quantity || '',
                         price: responseRs?.price || '',
                         description: responseRs?.description || '',
-                        selectedVendor: vendorExists ? responseRs.vendor_id : ''
+                        selectedVendor: vendorExists ? responseRs.inventory_detail?.vendor_id : ''
                     }))
                     setLoading(false);
                 }
             }
             catch (error) {
                 console.error(error);
+                setLoading(false);
             }
         }
     }
@@ -112,7 +113,6 @@ export default function AddEditProduct() {
         setLoading(true);
         var raw = JSON.stringify({
             addUpdateFlag: productId ? 1 : 0,
-            sku: values?.sku,
             name: values?.productName,
             description: values?.description ? values?.description : null,
             quantity: values?.quantity,
@@ -129,7 +129,7 @@ export default function AddEditProduct() {
             } else {
                 const responseRs = JSON.parse(result);
                 if (responseRs.status == 'success') {
-                    setShowAlerts(<AlertComp show={true} variant="success" message={productId ? 'Item Updated successfully' : 'Item Added successfully'} />);
+                    setShowAlerts(<AlertComp show={true} variant="success" message={productId ? 'Inventory Updated successfully' : 'Inventory Added successfully'} />);
                     setTimeout(() => {
                         setLoading(false);
                         setShowAlerts(<AlertComp show={false} />);
@@ -147,6 +147,7 @@ export default function AddEditProduct() {
         }
         catch (error) {
             console.error(error);
+            setLoading(false);
         }
     }
     return (
@@ -154,10 +155,10 @@ export default function AddEditProduct() {
             {showAlerts}
             {loading ? <ShowLoader /> : <HideLoader />}
             <div style={{ padding: '20px' }}>
-                <div className="row p-4">
+                <div className="row">
                     <div className='col-md-6 offset-md-3'>
                         <div className='text-center'>
-                            <h4 className='heading pt-2'>{productId ? 'Edit Item' : 'Add Item'}</h4>
+                            <h4 className='heading pt-2'>{productId ? 'Edit Inventory' : 'Add Inventory'}</h4>
                         </div>
                         <Formik initialValues={{ selectedCategory: productDetails?.selectedCategory, sku: productDetails?.sku, productName: productDetails?.productName, quantity: productDetails?.quantity, minQuantity: productDetails?.minQuantity, price: productDetails?.price, description: productDetails?.description, selectedVendor: productDetails?.selectedVendor }} validationSchema={ProductValidationSchema} enableReinitialize={true} onSubmit={submitProductDetails} >
                             {() => (
@@ -178,11 +179,6 @@ export default function AddEditProduct() {
                                             <ErrorMessage name='selectedCategory' component="div" className="text-start errorText" />
                                         </div>
                                         <div className='col-md-6 position-relative mb-5'>
-                                            <label className='custom-label'>SKU <span className='text-danger'>*</span></label>
-                                            <Field type="text" className="customInput" name='sku' autoComplete='off' />
-                                            <ErrorMessage name='sku' component="div" className="text-start errorText" />
-                                        </div>
-                                        <div className='col-md-6 position-relative mb-5'>
                                             <label className='custom-label'>Name <span className='text-danger'>*</span></label>
                                             <Field type="text" className="customInput" name='productName' autoComplete='off' />
                                             <ErrorMessage name='productName' component="div" className="text-start errorText" />
@@ -197,7 +193,7 @@ export default function AddEditProduct() {
                                             <Field type="number" className="customInput" name='minQuantity' autoComplete='off' min={0} />
                                             <ErrorMessage name='minQuantity' component="div" className="text-start errorText" />
                                         </div>
-                                        <div className='col-md-12 position-relative mb-5'>
+                                        <div className='col-md-6 position-relative mb-5'>
                                             <label className='custom-label' style={{ left: '60px' }}>Price <span className='text-danger'>*</span></label>
                                             <div className="input-group flex-nowrap position-relative">
                                                 <span className="input-group-text"><FontAwesomeIcon icon={faIndianRupeeSign} /></span>
