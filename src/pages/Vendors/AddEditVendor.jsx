@@ -96,7 +96,7 @@ export default function AddEditVendor() {
         <>
             {showAlerts}
             {loading ? <ShowLoader /> : <HideLoader />}
-            <div style={{ padding: '20px' }}>
+            <div className='content-padding'>
                 <div className="row">
                     <div className='col-md-6 offset-md-3'>
                         <div className='text-center'>

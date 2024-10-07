@@ -5,3 +5,16 @@ export const typewatch = (function () {
       timer = setTimeout(callback, ms);
     };
   })();
+// export const debounceFunc = (func, delay) => {
+//   let timeoutId;
+//   return (...args) => {
+//       if (timeoutId) {
+//           clearTimeout(timeoutId);
+//       }
+//       timeoutId = setTimeout(() => {
+//           func.apply(null, args);
+//       }, delay);
+//   };
+// };
+
+

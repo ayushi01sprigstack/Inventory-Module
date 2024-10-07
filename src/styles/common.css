@@ -8,6 +8,9 @@
   font-size: 16px;
   font-weight: 600;
 }
+.content-padding{
+  padding: 20px;
+}
 .heading {
   font-size: 25px;
   font-weight: 700;
@@ -133,6 +136,17 @@ input[type="checkbox"] {
   font-weight: 400;
   font-size: 14px;
 }
+.previewPoTable table thead th{
+  background-color: #f4f4f4;
+  font-size: 15px;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+}
+.previewPoTable table tbody td{
+  font-size: 14px;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+}
 .commonColor {
   color: #03053d;
 }
@@ -210,7 +224,16 @@ input[type="checkbox"] {
   background-color: #050854;
   border-radius: 4px;
   color: white;
-  padding: 7px 20px;
+  padding: 10px 40px;
   font-size: 14px;
   font-weight: 600;
+}
+.previewPoBtn {
+  border: 1px solid #050854;
+  color: #050854;
+  padding: 6px 15px;
+  border-radius: 4px;
+  font-size: 14px;
+  background: none;
+  font-weight: 500;
 }

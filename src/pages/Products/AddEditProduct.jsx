@@ -154,13 +154,13 @@ export default function AddEditProduct() {
         <>
             {showAlerts}
             {loading ? <ShowLoader /> : <HideLoader />}
-            <div style={{ padding: '20px' }}>
+            <div className='content-padding'>
                 <div className="row">
                     <div className='col-md-6 offset-md-3'>
                         <div className='text-center'>
                             <h4 className='heading pt-2'>{productId ? 'Edit Inventory' : 'Add Inventory'}</h4>
                         </div>
-                        <Formik initialValues={{ selectedCategory: productDetails?.selectedCategory, sku: productDetails?.sku, productName: productDetails?.productName, quantity: productDetails?.quantity, minQuantity: productDetails?.minQuantity, price: productDetails?.price, description: productDetails?.description, selectedVendor: productDetails?.selectedVendor }} validationSchema={ProductValidationSchema} enableReinitialize={true} onSubmit={submitProductDetails} >
+                        <Formik initialValues={{ selectedCategory: productDetails?.selectedCategory, productName: productDetails?.productName, quantity: productDetails?.quantity, minQuantity: productDetails?.minQuantity, price: productDetails?.price, description: productDetails?.description, selectedVendor: productDetails?.selectedVendor }} validationSchema={ProductValidationSchema} enableReinitialize={true} onSubmit={submitProductDetails} >
                             {() => (
                                 <Form className='pt-4 mt-2' onKeyDown={(e) => {
                                     if (e.key == 'Enter') {
@@ -169,7 +169,7 @@ export default function AddEditProduct() {
                                 }}>
                                     <div className="row">
                                         <div className="col-md-12 position-relative mb-5">
-                                            <label className='fw-semibold text-white' style={{ fontSize: '14px' }}>Please Select Category for Product <span className='text-danger'>*</span></label>
+                                            <label className='fw-semibold text-white font-14'>Please Select Category for Product <span className='text-danger'>*</span></label>
                                             <Field as="select" name="selectedCategory" className="customInput mt-1">
                                                 <option value="" className='text-black'>Select Category</option>
                                                 {categoriesAndVendors?.categories.map((category) => (
@@ -206,7 +206,7 @@ export default function AddEditProduct() {
                                             <Field as="textarea" className="customInput" name='description' autoComplete='off' rows="4" />
                                         </div>
                                         <div className="col-md-12 position-relative mb-4">
-                                            <label className='fw-semibold text-white' style={{ fontSize: '14px' }}>Please Select Vendor <span className='text-danger'>*</span></label>
+                                            <label className='fw-semibold text-white font-14'>Please Select Vendor <span className='text-danger'>*</span></label>
                                             {categoriesAndVendors?.vendors.length > 0 ? (
                                                 <>
                                                     <Field as="select" name="selectedVendor" className="customInput mt-1">

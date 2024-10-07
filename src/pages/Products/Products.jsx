@@ -56,19 +56,14 @@ export default function Products() {
     const [previewPo, setPreviewPo] = useState(false);
     const [previewErrorMsg, setPreviewErrorMsg] = useState('');
     const today = new Date().toISOString().split('T')[0];
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [selectedIdsQueue, setSelectedIdsQueue] = useState([]);
-    const [isMultipleGenerationPO, setIsMultipleGenarationPO] = useState(false);
-    const [reOrderQuantities, setReOrderQuantities] = useState([]);
     const [usageHistoryDetails, setUsageHistoryDetails] = useState([]);
     const [showUsageHistory, setShowUsageHistory] = useState(false);
     const [allvendors, setAllVendors] = useState([]);
     const [isEditingQuantity, setIsEditingQuantity] = useState(false);
     const [selectedItemsDetails, setSelectedItemsDetails] = useState([]);
 
-
     useEffect(() => {
-        getAllProducts(inventoryParamters.searchkey ? inventoryParamters.searchkey : null, inventoryParamters.sortKey || null);
+        getAllProducts(inventoryParamters.searchkey || null, inventoryParamters.sortKey || null);
     }, [currentPage])
 
     const getAllProducts = async (searchkey, sortkey) => {
@@ -81,7 +76,7 @@ export default function Products() {
                 sortByFlag: updatedSortByFlag
             }));
             try {
-                const result = await getAPI('/all-inventories/' + searchKeyParam + "&" + sortkey + "&" + updatedSortByFlag + "&" + currentPage + "&" + itemsPerPage);
+                const result = await getAPI(`/all-inventories/${searchKeyParam}&${sortkey}&${updatedSortByFlag}&${currentPage}&${itemsPerPage}`);
                 if (!result || result == '') {
                     alert('Something went wrong');
                 }
@@ -159,8 +154,7 @@ export default function Products() {
     }
 
     const modalBody = () => {
-        return (
-            <>
+        return (          
                 <Formik initialValues={{ utilizationQty: '', date: today, purpose: '' }} validationSchema={UtilizationValidationSchema} onSubmit={saveUtilizationQuantity} >
                     {() => (
                         <Form className='' onKeyDown={(e) => {
@@ -171,17 +165,17 @@ export default function Products() {
                             <div className="row">
                                 <div className="col-md-6 position-relative mb-3">
                                     <label className='font-14 fw-medium'>Enter Utilization Quantity <span className='text-danger'>*</span></label>
-                                    <Field type="number" name="utilizationQty" className="form-control mt-2" min={0} />
+                                    <Field type="number" name="utilizationQty" className="form-control" min={0} />
                                     <ErrorMessage name="utilizationQty" component="div" className="text-start errorText" />
                                 </div>
-                                <div className="col-md-6 position-relative mb-3">
+                                <div className="col-md-6 position-relative mb-2">
                                     <label className='font-14 fw-medium'>Select Date <span className='text-danger'>*</span></label>
-                                    <Field type="date" name="date" className="form-control mt-2" />
+                                    <Field type="date" name="date" className="form-control" />
                                     <ErrorMessage name="date" component="div" className="text-start errorText" />
                                 </div>
-                                <div className="col-md-12 position-relative mb-3">
+                                <div className="col-md-12 position-relative mb-2">
                                     <label className='font-14 fw-medium'>Purpose</label>
-                                    <Field as="textarea" className="form-control mt-2" name='purpose' autoComplete='off' rows="2" />
+                                    <Field as="textarea" className="form-control" name='purpose' autoComplete='off' rows="2" />
                                 </div>
                             </div>
                             <div className='text-end'>
@@ -191,7 +185,6 @@ export default function Products() {
                         </Form>
                     )}
                 </Formik>
-            </>
         )
     }
     const saveUtilizationQuantity = async (values) => {
@@ -273,212 +266,297 @@ export default function Products() {
             setPreviewPo(!previewPo);
             setPreviewErrorMsg('');
         } else {
-            setPreviewErrorMsg('Please enter quanity.')
+            setPreviewErrorMsg('Please select vendor.')
         }
     }
     const modalBodyPurchaseOrder = () => {
         return (
             <>
-                <h5 className='modalBodyHeading'>Vendor Information :</h5>
-                <Formik initialValues={{ selectedVendor: poDetails?.vendorID || '', quantity: 0 }} validationSchema={GeneratePoValidationSchema} enableReinitialize={true} onSubmit={saveGeneratePO} >
-                    {({ setFieldValue, values }) => (
+                {!previewPo && <h5 className='modalBodyHeading'>Vendor Information :</h5>}
+                <Formik initialValues={{
+                    selectedVendor: poDetails?.vendorID || '',
+                    quantity: 0,
+                    quantities: {}
+                }} validationSchema={GeneratePoValidationSchema} enableReinitialize={true} onSubmit={saveGeneratePO} >
+                    {({ setFieldValue, values, validateForm }) => (
                         <Form className='' onKeyDown={(e) => {
                             if (e.key == 'Enter') {
                                 e.preventDefault();
                             }
                         }}>
-                            <div className="row">
-                                <div className="col-md-6 position-relative mb-3">
-                                    <label className='font-14 fw-medium'>Vendor Name<span className='text-danger'>*</span></label>
-                                    <Field as="select" name="selectedVendor" className="customSelect" onChange={(e) => {
-                                        const selectedId = e.target.value;
-                                        setFieldValue("selectedVendor", selectedId);
-                                        const selectedVendor = allvendors.find(vendor => vendor.id == selectedId);
-                                        if (selectedVendor) {
-                                            setPoDetails(prevState => ({
-                                                ...prevState,
-                                                vendorContactNum: selectedVendor.contact_num || '',
-                                                vendorEmail: selectedVendor.email || '',
-                                                address: selectedVendor.address || '',
-                                                companyName: selectedVendor.company_name || ''
-                                            }));
-                                        }
-                                    }}>
-                                        <option value="">Select Vendor</option>
-                                        {allvendors.map((vendor) => (
-                                            <option key={vendor?.id} value={vendor?.id} className=''>{vendor?.name}</option>
-                                        ))}
-                                    </Field>
-                                    <ErrorMessage name='selectedVendor' component="div" className="text-start errorText" />
-                                </div>
-                                <div className="col-md-6 position-relative mb-3">
-                                    <label className='font-14 fw-medium'>Phone Number: </label>
-                                    <input type="text" className='form-control' value={poDetails?.vendorContactNum} disabled />
-                                </div>
-                                <div className="col-md-6 position-relative mb-3">
-                                    <label className='font-14 fw-medium'>Email Id :</label>
-                                    <input type="text" className='form-control' value={poDetails?.vendorEmail} disabled />
-                                </div>
-                                <div className="col-md-6 position-relative mb-3">
-                                    <label className='font-14 fw-medium'>Company Name :</label>
-                                    <input type="text" className='form-control' value={poDetails?.companyName} disabled />
-                                </div>
-                                <div className="col-md-12 position-relative mb-3">
-                                    <label className='font-14 fw-medium'>Address:</label>
-                                    <textarea className='form-control' rows={1} value={poDetails?.address} disabled />
-                                </div>
-                            </div>
-                            <h5 className='modalBodyHeading'>Item List Details :</h5>
-                            <div className='purchaseOrderTable'>
-                                <table className='table table-responsive table-bordered'>
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" className='cursor-pointer'>Item Name</th>
-                                            <th scope="col" className='cursor-pointer'>Quantity</th>
-                                            <th scope="col" className='cursor-pointer'>Price per qty</th>
-                                            <th scope="col" className='cursor-pointer'>Total Price</th>
-                                            <th scope="col" className='cursor-pointer'>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>{poDetails?.inventoryName}</td>
-                                            <td className='position-relative'>
-                                            {isEditingQuantity ? (
-                                                <input
-                                                    type="number"
-                                                    value={values.quantity}
-                                                    onChange={(e) => {setFieldValue('quantity', e.target.value); }}
-                                                    onBlur={() => setIsEditingQuantity(false)} 
-                                                    autoFocus
-                                                    className="form-control position-absolute start-0 top-0"
-                                                    min={0}
-                                                />
+                            {!previewPo && (
+                                <>
+                                    <div className="row">
+                                        <div className="col-md-6 position-relative mb-3">
+                                            <label className='font-14 fw-medium'>Vendor Name<span className='text-danger'>*</span></label>
+                                            <Field as="select" name="selectedVendor" className="customSelect" onChange={(e) => {
+                                                const selectedId = e.target.value;
+                                                setFieldValue("selectedVendor", selectedId);
+                                                const selectedVendor = allvendors.find(vendor => vendor.id == selectedId);
+                                                if (selectedVendor) {
+                                                    setPoDetails(prevState => ({
+                                                        ...prevState,
+                                                        vendorName: selectedVendor.name,
+                                                        vendorContactNum: selectedVendor.contact_num || '',
+                                                        vendorEmail: selectedVendor.email || '',
+                                                        address: selectedVendor.address || '',
+                                                        companyName: selectedVendor.company_name || ''
+                                                    }));
+                                                }
+                                            }}>
+                                                <option value="">Select Vendor</option>
+                                                {allvendors.map((vendor) => (
+                                                    <option key={vendor?.id} value={vendor?.id} className=''>{vendor?.name}</option>
+                                                ))}
+                                            </Field>
+                                            <ErrorMessage name='selectedVendor' component="div" className="text-start errorText" />
+                                        </div>
+                                        <div className="col-md-6 position-relative mb-2">
+                                            <label className='font-14 fw-medium'>Phone Number: </label>
+                                            <input type="text" className='form-control font-14' value={poDetails?.vendorContactNum} disabled />
+                                        </div>
+                                        <div className="col-md-6 position-relative mb-2">
+                                            <label className='font-14 fw-medium'>Email Id :</label>
+                                            <input type="text" className='form-control font-14' value={poDetails?.vendorEmail} disabled />
+                                        </div>
+                                        <div className="col-md-6 position-relative mb-2">
+                                            <label className='font-14 fw-medium'>Company Name :</label>
+                                            <input type="text" className='form-control font-14' value={poDetails?.companyName} disabled />
+                                        </div>
+                                        <div className="col-md-12 position-relative mb-3">
+                                            <label className='font-14 fw-medium'>Address:</label>
+                                            <textarea className='form-control font-14' rows={1} value={poDetails?.address} disabled />
+                                        </div>
+                                    </div>
+                                    <h5 className='modalBodyHeading mt-3'>Item List Details :</h5>
+                                    <div className='purchaseOrderTable'>
+                                        <table className='table table-responsive table-bordered'>
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col" className='cursor-pointer'>Item Name</th>
+                                                    <th scope="col" className='cursor-pointer'>Quantity</th>
+                                                    <th scope="col" className='cursor-pointer'>Price per qty</th>
+                                                    <th scope="col" className='cursor-pointer'>Total Price</th>
+                                                    <th scope="col" className='cursor-pointer'>Action</th>
+                                                </tr>
+                                            </thead>
+                                            {selectedInventoryIds.length > 1 ? (
+                                                <tbody>
+                                                    {selectedItemsDetails.map(item => (
+                                                        <tr key={item.id}>
+                                                            <td>{item.name}</td>
+                                                            <td className='position-relative'>
+                                                                {isEditingQuantity == item.id ? (
+                                                                    <input
+                                                                        type="number"
+                                                                        value={values.quantities[item?.id]}
+                                                                        onChange={(e) => {
+                                                                            setFieldValue(`quantities.${item?.id}`, e.target.value);
+                                                                        }}
+                                                                        onBlur={() => setIsEditingQuantity(false)}
+                                                                        autoFocus
+                                                                        className="form-control position-absolute start-0 top-0"
+                                                                        min={0}
+                                                                    />
+                                                                ) : (
+                                                                    <span onClick={() => setIsEditingQuantity(item.id)}>{values.quantities[item.id] || 0}</span>
+                                                                )}
+                                                            </td>
+                                                            <td>Rs. {item.price}</td>
+                                                            <td>Rs. {(item.price * (values.quantities[item.id] || 0)).toFixed(2)}</td>
+                                                            <td className='text-center'>
+                                                                <img src={Images.editIconBlack} className='cursor-pointer' alt="edit" style={{ height: '15px' }} title="Edit item" onClick={() => setIsEditingQuantity(item.id)} />
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
                                             ) : (
-                                                <span onClick={() => setIsEditingQuantity(true)}>{values.quantity}</span> 
+                                                <tbody>
+                                                    <tr>
+                                                        <td>{poDetails?.inventoryName}</td>
+                                                        <td className='position-relative'>
+                                                            {isEditingQuantity ? (
+                                                                <input
+                                                                    type="number"
+                                                                    value={values.quantity}
+                                                                    onChange={(e) => {
+                                                                        setFieldValue('quantity', e.target.value);
+                                                                    }}
+                                                                    onBlur={() => setIsEditingQuantity(false)}
+                                                                    autoFocus
+                                                                    className="form-control position-absolute start-0 top-0"
+                                                                    min={0}
+                                                                />
+                                                            ) : (
+                                                                <span onClick={() => setIsEditingQuantity(true)}> {values.quantity || 0}</span>
+                                                            )}
+                                                        </td>
+                                                        <td>Rs. {poDetails?.price}</td>
+                                                        <td>Rs. {(poDetails?.price * values.quantity).toFixed(2)}</td>
+                                                        <td className='text-center'> <img src={Images.editIconBlack} className='cursor-pointer text-white' alt="edit" style={{ height: '15px' }} title="Edit item" onClick={() => setIsEditingQuantity(true)} /></td>
+                                                    </tr>
+                                                </tbody>
                                             )}
-                                        </td>
-                                            <td>{poDetails?.price}</td>
-                                            <td>₹{poDetails?.price}</td>
-                                            <td className='text-center'> <img src={Images.editIconBlack} className='cursor-pointer text-white' alt="edit" style={{ height: '15px' }} title="Edit item"  onClick={() => setIsEditingQuantity(true)}/></td>
-                                        </tr>
-                                    </tbody>
-                                    {/* <tbody>
-                                        {selectedItemsDetails.map(item => (
-                                            <tr key={item.id}>
-                                                <td>{item.name}</td>
-                                                <td className='position-relative'>
-                                                    {isEditingQuantity === item.id ? (
-                                                        <input
-                                                            type="number"
-                                                            value={values.quantity}
-                                                            onChange={(e) => { setFieldValue('quantity', e.target.value); }}
-                                                            onBlur={() => setIsEditingQuantity(false)}
-                                                            autoFocus
-                                                            className="form-control position-absolute start-0 top-0"
-                                                            min={0}
-                                                        />
-                                                    ) : (
-                                                        <span onClick={() => setIsEditingQuantity(item.id)}>{values.quantity}</span>
-                                                    )}
-                                                </td>
-                                                <td>{item.price}</td>
-                                                <td>₹{(item.price * values.quantity).toFixed(2)}</td>
-                                                <td className='text-center'>
-                                                    <img src={Images.editIconBlack} className='cursor-pointer' alt="edit" style={{ height: '15px' }} title="Edit item" onClick={() => setIsEditingQuantity(item.id)} />
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody> */}
-                                </table>
-                            </div>
-                            <div className='text-center'>
+                                        </table>
+                                        <div className='text-end'>
+                                            <strong>Total Price: </strong> <span className='fw-normal'>Rs.  {selectedInventoryIds.length > 1 ? (
+                                                (() => {
+                                                    let totalPrice = 0;
+                                                    selectedItemsDetails.forEach(item => {
+                                                        const quantity = values.quantities[item.id] || 0;
+                                                        totalPrice += item.price * quantity
+                                                    });
+                                                    return totalPrice.toFixed(2);
+                                                })()
+                                            ) : (
+                                                (poDetails?.price * values.quantity).toFixed(2)
+                                            )}</span>
+                                        </div>
+                                    </div>
+                                    <div className='text-center text-danger'>{previewErrorMsg}</div>
+                                    <div className='text-end mt-3'>
+                                        <button type="button" className='previewPoBtn' onClick={() => handlePreviewPo(validateForm)}>
+                                            Preview PO
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                            {previewPo && (
+                                <>
+                                    <div className="preview-section p-3 mb-3 border rounded p-4">
+                                        <h3 className='fw-bold mb-3 mt-3 p-1 text-center'>Purchase Order</h3>
+                                        <hr />
+                                        <div className='text-end p-2'>
+                                            <p><strong>Generated on:</strong> {today}</p>
+                                        </div>
+                                        <div className=''>
+                                            <p><strong>Vendor Name: </strong> {poDetails?.vendorName}</p>
+                                            <p><strong>Contact Number: </strong> {poDetails?.vendorContactNum}</p>
+                                            <p><strong>Address:</strong> {poDetails?.address}</p>
+                                        </div>
+                                        <div className='previewPoTable'>
+                                            <table className='table table-responsive'>
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col" className='cursor-pointer'>Item Name</th>
+                                                        <th scope="col" className='cursor-pointer'>Quantity</th>
+                                                        <th scope="col" className='cursor-pointer'>Price</th>
+                                                        <th scope="col" className='cursor-pointer'>Total Price</th>
+                                                    </tr>
+                                                </thead>
+                                                {selectedInventoryIds.length > 1 ? (
+                                                    <tbody>
+                                                        {selectedItemsDetails.map(item => (
+                                                            <tr key={item.id}>
+                                                                <td>{item.name}</td>
+                                                                <td>{values.quantities[item.id] || 0}</td>
+                                                                <td>Rs. {item.price}</td>
+                                                                <td>Rs. {(item.price * (values.quantities[item.id] || 0)).toFixed(2)}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                ) : (
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>{poDetails?.inventoryName}</td>
+                                                            <td>{values.quantity || 0}</td>
+                                                            <td>{poDetails?.price}</td>
+                                                            <td>Rs. {(poDetails?.price * values.quantity).toFixed(2)}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                )}
+                                            </table>
+                                        </div>
+                                        <div className='text-end mt-4'>
+                                            <div className='text-end'>
+                                                <strong>Total Price: </strong> <span className='fw-normal'>Rs.  {selectedInventoryIds.length > 1 ? (
+                                                    (() => {
+                                                        let totalPrice = 0;
+                                                        selectedItemsDetails.forEach(item => {
+                                                            const quantity = values.quantities[item.id] || 0;
+                                                            totalPrice += item.price * quantity
+                                                        });
+                                                        return totalPrice.toFixed(2);
+                                                    })()
+                                                ) : (
+                                                    (poDetails?.price * values.quantity).toFixed(2)
+                                                )}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className='text-end mt-3'>
+                                        <button type="button" className='previewPoBtn' onClick={() => setPreviewPo(false)}>
+                                            Edit Details
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                            <div className='text-center mt-2'>
                                 <button type='submit' className='submitBtn'>Submit</button>
+                                <button className='cancelBtn ms-3 rounded-2' type="button" onClick={() => { setShowPoModal(false); setPreviewPo(false); setPreviewErrorMsg('') }}>Cancel</button>
                             </div>
                         </Form>
                     )}
                 </Formik>
-
             </>
         )
     }
-    const saveGeneratePO = async (updatedReOrderQuantities, values) => {
-        // setLoading(true);
-        // const inventoryToVendorMap = products.reduce((acc, product) => {
-        //     acc[product.id] = product.vendor_id;
-        //     return acc;
-        // }, {});
-        // let raw;
-        // if (isMultipleGenerationPO) {
-        //     raw = JSON.stringify({
-        //         vendorInventoryDetails: selectedIdsQueue.map((inventoryId, index) => ({
-        //             vendor_id: inventoryToVendorMap[inventoryId] || null,
-        //             inventory_id: inventoryId,
-        //             reminder_quantity: updatedReOrderQuantities[index] || 0,
-        //         })),
-        //     })
-        // }
-        // else {
-        //     raw = JSON.stringify({
-        //         vendorInventoryDetails: [
-        //             {
-        //                 vendor_id: poDetails?.vendorID,
-        //                 inventory_id: poDetails?.inventoryId,
-        //                 reminder_quantity: values?.reOrderQuantity
-        //             }
-        //         ]
-        //     })
-        // }
-        // if (isMultipleGenerationPO && currentIndex + 1 == selectedIdsQueue.length) {
-        //     setIsMultipleGenarationPO(false);
-        // }
-        // setShowPoModal(false);
-        // setPreviewPo(false);
-        // try {
-        //     const result = await postAPI('/generate-purchase-order', raw);
-        //     if (!result || result == "") {
-        //         alert('Something went wrong');
-        //     } else {
-        //         const responseRs = JSON.parse(result);
-        //         if (responseRs.status == 'success') {
-        //             setShowAlerts(<AlertComp show={true} variant="success" message='Purchase Order generated successfully' />);
-        //             setTimeout(() => {
-        //                 setLoading(false);
-        //                 setShowAlerts(<AlertComp show={false} />);
-        //                 getAllProducts(inventoryParamters.searchkey ? inventoryParamters.searchkey : null, inventoryParamters.sortKey || null);
-        //                 setSelectedInventoryIds([]);
-        //                 setSelectedIdsQueue([]);
-        //                 setCurrentIndex(0);
-        //             }, 2500);
-        //         }
-        //         else {
-        //             setShowAlerts(<AlertComp show={true} variant="danger" message={responseRs?.message} />);
-        //             setTimeout(() => {
-        //                 setLoading(false);
-        //                 setShowAlerts(<AlertComp show={false} />);
-        //             }, 2000);
-        //         }
-        //     }
-        // }
-        // catch (error) {
-        //     console.error(error);
-        //     setLoading(false);
-        // }
-    }
-    const handleNext = (resetForm, values) => {
-        setReOrderQuantities(prev => {
-            const newQuantities = [...prev];
-            newQuantities[currentIndex] = values.reOrderQuantity;
-            return newQuantities;
-        });
-        if (currentIndex + 1 < selectedIdsQueue.length) {
-            const nextIndex = currentIndex + 1;
-            setCurrentIndex(nextIndex);
-            getInventoryDataById(selectedIdsQueue[nextIndex]);
-            resetForm({ reOrderQuantity: '' });
-            setPreviewPo(false);
+    const saveGeneratePO = async (values) => {
+        setLoading(true);
+        const inventoryDetailsArray = [];
+        if (selectedInventoryIds.length > 1) {
+            selectedItemsDetails.forEach(item => {
+                const quantity = values.quantities[item.id] || 0;
+                inventoryDetailsArray.push({
+                    inventoryId: item.id,
+                    reminderQuantity: quantity
+                })
+            })
         }
-    };
+        else {
+            inventoryDetailsArray.push({
+                inventoryId: poDetails?.inventoryId,
+                reminderQuantity: values?.quantity
+            })
+        }
+        var raw = JSON.stringify({
+            vendorId: values.selectedVendor,
+            inventoryDetails: inventoryDetailsArray
+        })
+        setShowPoModal(false);
+        setPreviewPo(false);
+        try {
+            const result = await postAPI('/generate-purchase-order', raw);
+            if (!result || result == "") {
+                alert('Something went wrong');
+            } else {
+                const responseRs = JSON.parse(result);
+                if (responseRs.status == 'success') {
+                    setShowAlerts(<AlertComp show={true} variant="success" message='Purchase Order generated successfully' />);
+                    setTimeout(() => {
+                        setLoading(false);
+                        setShowAlerts(<AlertComp show={false} />);
+                        getAllProducts(inventoryParamters.searchkey ? inventoryParamters.searchkey : null, inventoryParamters.sortKey || null);
+                        setSelectedInventoryIds([]);
+                        setIsAllSelected(false);
+                        setPreviewErrorMsg('');
+                        setPreviewPo(false);
+                    }, 2500);
+                }
+                else {
+                    setShowAlerts(<AlertComp show={true} variant="danger" message={responseRs?.message} />);
+                    setTimeout(() => {
+                        setLoading(false);
+                        setShowAlerts(<AlertComp show={false} />);
+                    }, 2000);
+                }
+            }
+        }
+        catch (error) {
+            console.error(error);
+            setLoading(false);
+        }
+    }
 
     const getVendors = async () => {
         setLoading(true);
@@ -498,22 +576,12 @@ export default function Products() {
             setLoading(false);
         }
     }
-    // const handleGenerateMultiplePo = () => {
-    //     setIsMultipleGenarationPO(true);
-    //     setPreviewErrorMsg('')
-    //     if (selectedInventoryIds.length > 1) {
-    //         setSelectedIdsQueue(selectedInventoryIds);
-    //         setCurrentIndex(0);
-    //         getInventoryDataById(selectedInventoryIds[0]);
-    //         setShowPoModal(true);
-    //     }
-    // }
     const handleGenerateMultiplePo = () => {
         const selectedItems = products.filter(product => selectedInventoryIds.includes(product.id));
         setSelectedItemsDetails(selectedItems);
         setShowPoModal(true);
+        getVendors();
     };
-
 
     const modalBodyUsageHistory = () => {
         return (
@@ -524,9 +592,9 @@ export default function Products() {
                     <table className='table table-responsive table-bordered'>
                         <thead>
                             <tr>
-                                <th scope="col" className='cursor-pointer'>Date</th>
-                                <th scope="col" className='cursor-pointer'>Quantity used</th>
-                                <th scope="col" className='cursor-pointer'>Purpose</th>
+                                <th scope="col" className=''>Date</th>
+                                <th scope="col" className=''>Quantity used</th>
+                                <th scope="col" className=''>Purpose</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -568,7 +636,7 @@ export default function Products() {
                             <button className='productBtn' onClick={handleGenerateMultiplePo}> <img src={Images.poIcon} alt="po-icon" className='me-1 ms-3' style={{ height: '20px' }} />Generate PO</button>
                         }
                         <br />
-                        <span className='redText'>*Current stock quantity is below the minimum stock quantity required.</span>
+                        <span className='redText'>*Low stock quantity. Please reorder</span>
                     </div>
                 </div>
             </div>
@@ -589,7 +657,7 @@ export default function Products() {
                     <tbody>
                         {products.length > 0 ? (
                             products.map((product) => (
-                                <tr key={product?.id} className={product?.purchaseOrderFlag == 1 ? 'redText' : ''}>
+                                <tr key={product?.id} className={product?.needsPurchaseOrderFlag == 1 ? 'redText' : ''}>
                                     <td><input type="checkbox" className='cursor-pointer' checked={selectedInventoryIds.includes(product?.id)} onChange={() => handleSelectInventory(product?.id)} /></td>
                                     <td className='text-decoration-underline cursor-pointer' onClick={() => { setShowUsageHistory(true); getInventoryDataById(product?.id) }}>{product?.name}</td>
                                     <td>{product?.quantity}</td>
@@ -629,7 +697,7 @@ export default function Products() {
                 />
             </div>
             <Popup show={showUtlizationPopup} handleClose={() => setShowUtlizationPopup(false)} size="md" modalHeader="Add Utilization Quantity" modalBody={modalBody()} customTitle='modalTitle' modalFooter={false} />
-            <Popup show={showPoModal} handleClose={() => { setShowPoModal(false) }} size="lg" modalHeader="Generate Purchase Order" modalBody={modalBodyPurchaseOrder()} customTitle='modalTitle' modalFooter={false} />
+            <Popup show={showPoModal} handleClose={() => { setShowPoModal(false); setPreviewErrorMsg('') }} size="lg" modalHeader="Generate Purchase Order" modalBody={modalBodyPurchaseOrder()} customTitle='modalTitle' modalFooter={false} />
             <Popup show={showUsageHistory} handleClose={() => setShowUsageHistory(false)} size="md" modalHeader="Utilization Overview" customTitle='customTitle modalTitle' modalBody={modalBodyUsageHistory()} modalFooter={false} />
         </>
     )
