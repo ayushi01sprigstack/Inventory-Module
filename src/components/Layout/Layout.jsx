@@ -16,6 +16,8 @@ export default function Layout() {
                 return 'Vendors';
             case '/add-update-vendor':
                 return 'Add / Edit Vendor';
+            case '/purchase-orders':
+                return 'Purchase Orders';
             default:
                 return 'Inventory Management'
         }
@@ -27,7 +29,7 @@ export default function Layout() {
             </aside>
             <div className='content-container'>
                 <header className='topmenu-container'>
-                    <TopMenu heading={getHeading()}/>
+                    <TopMenu heading={getHeading()} />
                 </header>
                 <main className='content-wrapper'>
                     <Outlet />

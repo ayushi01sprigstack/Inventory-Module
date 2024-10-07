@@ -9,12 +9,13 @@ import Swal from 'sweetalert2';
 import AlertComp from '../../components/AlertComp';
 import Images from '../../utils/Images';
 import PaginationComp from '../../components/PaginationComp';
-import { typewatch } from '../../utils/js/Common';
+import { formatDate, typewatch } from '../../utils/js/Common';
 import Popup from '../../components/Popup';
 import { Field, Formik, Form, ErrorMessage, } from 'formik';
 import GeneratePoValidationSchema from './GeneratePoValidationSchema';
 import UtilizationValidationSchema from './UtilizationValidationSchema';
 import DynamicSearchComp from '../../components/DynamicSearchComp';
+import Tab from '../../components/Tab';
 
 export default function Products() {
     const navigate = useNavigate();
@@ -57,6 +58,7 @@ export default function Products() {
     const [previewErrorMsg, setPreviewErrorMsg] = useState('');
     const today = new Date().toISOString().split('T')[0];
     const [usageHistoryDetails, setUsageHistoryDetails] = useState([]);
+    const [purchaseOrderHistory, setPurchaseOrderHistory] = useState([]);
     const [showUsageHistory, setShowUsageHistory] = useState(false);
     const [allvendors, setAllVendors] = useState([]);
     const [isEditingQuantity, setIsEditingQuantity] = useState(false);
@@ -154,37 +156,37 @@ export default function Products() {
     }
 
     const modalBody = () => {
-        return (          
-                <Formik initialValues={{ utilizationQty: '', date: today, purpose: '' }} validationSchema={UtilizationValidationSchema} onSubmit={saveUtilizationQuantity} >
-                    {() => (
-                        <Form className='' onKeyDown={(e) => {
-                            if (e.key == 'Enter') {
-                                e.preventDefault();
-                            }
-                        }}>
-                            <div className="row">
-                                <div className="col-md-6 position-relative mb-3">
-                                    <label className='font-14 fw-medium'>Enter Utilization Quantity <span className='text-danger'>*</span></label>
-                                    <Field type="number" name="utilizationQty" className="form-control" min={0} />
-                                    <ErrorMessage name="utilizationQty" component="div" className="text-start errorText" />
-                                </div>
-                                <div className="col-md-6 position-relative mb-2">
-                                    <label className='font-14 fw-medium'>Select Date <span className='text-danger'>*</span></label>
-                                    <Field type="date" name="date" className="form-control" />
-                                    <ErrorMessage name="date" component="div" className="text-start errorText" />
-                                </div>
-                                <div className="col-md-12 position-relative mb-2">
-                                    <label className='font-14 fw-medium'>Purpose</label>
-                                    <Field as="textarea" className="form-control" name='purpose' autoComplete='off' rows="2" />
-                                </div>
+        return (
+            <Formik initialValues={{ utilizationQty: '', date: today, purpose: '' }} validationSchema={UtilizationValidationSchema} onSubmit={saveUtilizationQuantity} >
+                {() => (
+                    <Form className='' onKeyDown={(e) => {
+                        if (e.key == 'Enter') {
+                            e.preventDefault();
+                        }
+                    }}>
+                        <div className="row">
+                            <div className="col-md-6 position-relative mb-3">
+                                <label className='font-14 fw-medium'>Enter Utilization Quantity <span className='text-danger'>*</span></label>
+                                <Field type="number" name="utilizationQty" className="form-control" min={0} />
+                                <ErrorMessage name="utilizationQty" component="div" className="text-start errorText" />
                             </div>
-                            <div className='text-end'>
-                                <button className='cancelBtn' onClick={() => setShowUtlizationPopup(false)}> Close</button>
-                                <button className='saveBtn text-white ms-2' type="submit" style={{ background: '#303260' }}>Save</button>
+                            <div className="col-md-6 position-relative mb-2">
+                                <label className='font-14 fw-medium'>Select Date <span className='text-danger'>*</span></label>
+                                <Field type="date" name="date" className="form-control" />
+                                <ErrorMessage name="date" component="div" className="text-start errorText" />
                             </div>
-                        </Form>
-                    )}
-                </Formik>
+                            <div className="col-md-12 position-relative mb-2">
+                                <label className='font-14 fw-medium'>Purpose</label>
+                                <Field as="textarea" className="form-control" name='purpose' autoComplete='off' rows="2" />
+                            </div>
+                        </div>
+                        <div className='text-end'>
+                            <button className='cancelBtn' onClick={() => setShowUtlizationPopup(false)}> Close</button>
+                            <button className='saveBtn text-white ms-2' type="submit" style={{ background: '#303260' }}>Save</button>
+                        </div>
+                    </Form>
+                )}
+            </Formik>
         )
     }
     const saveUtilizationQuantity = async (values) => {
@@ -249,7 +251,8 @@ export default function Products() {
                     address: responseRs?.inventory_detail?.vendor?.address,
                     companyName: responseRs?.inventory_detail?.vendor?.company_name
                 }));
-                setUsageHistoryDetails(responseRs?.usage_history)
+                setUsageHistoryDetails(responseRs?.usage_history);
+                setPurchaseOrderHistory(responseRs?.purchase_logs);
                 setLoading(false);
             }
         }
@@ -270,11 +273,20 @@ export default function Products() {
         }
     }
     const modalBodyPurchaseOrder = () => {
+        const getCommonVendorId = () => {
+            const vendorIds = selectedInventoryIds.map(id => {
+                const inventory = products.find(inv => inv.id === id);
+                return inventory?.inventory_detail?.vendor_id; 
+            });
+            const uniqueVendorIds = [...new Set(vendorIds)];
+            return uniqueVendorIds.length === 1 ? uniqueVendorIds[0] : ''; 
+        };
         return (
             <>
                 {!previewPo && <h5 className='modalBodyHeading'>Vendor Information :</h5>}
                 <Formik initialValues={{
-                    selectedVendor: poDetails?.vendorID || '',
+                    // selectedVendor: poDetails?.vendorID || '',
+                    selectedVendor: selectedInventoryIds.length > 1 ? getCommonVendorId() : poDetails?.vendorID || '',
                     quantity: 0,
                     quantities: {}
                 }} validationSchema={GeneratePoValidationSchema} enableReinitialize={true} onSubmit={saveGeneratePO} >
@@ -365,7 +377,7 @@ export default function Products() {
                                                             <td>Rs. {item.price}</td>
                                                             <td>Rs. {(item.price * (values.quantities[item.id] || 0)).toFixed(2)}</td>
                                                             <td className='text-center'>
-                                                                <img src={Images.editIconBlack} className='cursor-pointer' alt="edit" style={{ height: '15px' }} title="Edit item" onClick={() => setIsEditingQuantity(item.id)} />
+                                                                <img src={Images.editIconBlack} className='cursor-pointer' alt="edit" style={{ height: '15px' }} title="Edit quantity" onClick={() => setIsEditingQuantity(item.id)} />
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -393,7 +405,7 @@ export default function Products() {
                                                         </td>
                                                         <td>Rs. {poDetails?.price}</td>
                                                         <td>Rs. {(poDetails?.price * values.quantity).toFixed(2)}</td>
-                                                        <td className='text-center'> <img src={Images.editIconBlack} className='cursor-pointer text-white' alt="edit" style={{ height: '15px' }} title="Edit item" onClick={() => setIsEditingQuantity(true)} /></td>
+                                                        <td className='text-center'> <img src={Images.editIconBlack} className='cursor-pointer text-white' alt="edit" style={{ height: '15px' }} title="Edit quantity" onClick={() => setIsEditingQuantity(true)} /></td>
                                                     </tr>
                                                 </tbody>
                                             )}
@@ -493,7 +505,7 @@ export default function Products() {
                             )}
                             <div className='text-center mt-2'>
                                 <button type='submit' className='submitBtn'>Submit</button>
-                                <button className='cancelBtn ms-3 rounded-2' type="button" onClick={() => { setShowPoModal(false); setPreviewPo(false); setPreviewErrorMsg('') }}>Cancel</button>
+                                <button className='cancelBtn ms-3 rounded-2' type="button" onClick={() => { setShowPoModal(false); setPreviewPo(false); setPreviewErrorMsg('');setFieldValue("selectedVendor",'') }}>Cancel</button>
                             </div>
                         </Form>
                     )}
@@ -584,40 +596,87 @@ export default function Products() {
     };
 
     const modalBodyUsageHistory = () => {
+        const [activeTab, setActiveTab] = useState('utilization');
+        const handleTabClick = (tabName) => {
+            setActiveTab(tabName);
+        }
         return (
-            <>
-                <p className='commonColor fw-semibold'>Item name:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetails?.inventoryName}</span></p>
-                <p className='commonColor fw-semibold mb-2'>Usage History</p>
-                <div className='utilizationTable'>
-                    <table className='table table-responsive table-bordered'>
-                        <thead>
-                            <tr>
-                                <th scope="col" className=''>Date</th>
-                                <th scope="col" className=''>Quantity used</th>
-                                <th scope="col" className=''>Purpose</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {usageHistoryDetails.length != 0 ? (
-                                usageHistoryDetails.map((usage) => (
-                                    <tr key={usage.id}>
-                                        <td>{usage?.used_date}</td>
-                                        <td>{usage?.quantity}</td>
-                                        <td>{usage?.usage_purpose ? usage?.usage_purpose : '-'}</td>
+            <div className='inventoryDetailsPopupWrapper'>
+                <ul className="nav nav-tabs">
+                    <Tab isActive={activeTab == 'utilization'} label="Utilization history" onClick={() => handleTabClick('utilization')} col={'col-md-6'} />
+                    <Tab isActive={activeTab == 'poHistory'} label="Po history" onClick={() => handleTabClick('poHistory')} col={'col-md-6'} />
+                </ul>
+                {activeTab == 'utilization' ? (
+                    <>
+                        <p className='commonColor fw-semibold mt-4'>Item name:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetails?.inventoryName}</span></p>
+                        <p className='commonColor fw-semibold mb-2'>Usage History</p>
+                        <div className='utilizationTable'>
+                            <table className='table table-responsive table-bordered'>
+                                <thead>
+                                    <tr>
+                                        <th scope="col" className=''>Date</th>
+                                        <th scope="col" className=''>Quantity used</th>
+                                        <th scope="col" className=''>Purpose</th>
                                     </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="3" className="text-center">No records found</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-                <div className='text-end'>
+                                </thead>
+                                <tbody>
+                                    {usageHistoryDetails.length != 0 ? (
+                                        usageHistoryDetails.map((usage) => (
+                                            <tr key={usage.id}>
+                                                <td>{usage?.used_date}</td>
+                                                <td>{usage?.quantity}</td>
+                                                <td>{usage?.usage_purpose ? usage?.usage_purpose : '-'}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="3" className="text-center">No records found</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                ) : activeTab == 'poHistory' ? (
+                    <>
+                        <p className='commonColor fw-semibold mt-4'>Item name:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetails?.inventoryName}</span></p>
+                        <p className='commonColor fw-semibold mb-2'>Purchase Order History</p>
+                        <div className='utilizationTable'>
+                            <table className='table table-responsive table-bordered'>
+                                <thead>
+                                    <tr>
+                                        <th scope="col" className=''>PO Number</th>
+                                        <th scope="col" className=''>Quantity</th>
+                                        <th scope="col" className=''>Ordered Date</th>
+                                        <th scope="col" className=''>Delivered Date</th>
+                                        <th scope="col" className=''>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {purchaseOrderHistory.length != 0 ? (
+                                        purchaseOrderHistory.map((po) => (
+                                            <tr key={po.id}>
+                                                <td>{po?.purchase_order_id}</td>
+                                                <td>{po?.ordered_quantity}</td>
+                                                <td>{formatDate(po?.purchase_order?.created_at)}</td>
+                                                <td>{po?.purchase_order?.delivery_date || '-'}</td>
+                                                <td>{po?.purchase_order?.status == 1 ? 'Pending' : po?.purchase_order?.status == 2 ? 'Partially Received' : 'Received'}</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="5" className="text-center">No records found</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                ) : null}
+                <div className='text-end mt-3'>
                     <button className='cancelBtn' onClick={() => setShowUsageHistory(false)}> Close</button>
                 </div>
-            </>
+            </div>
         )
     }
     return (
@@ -697,8 +756,8 @@ export default function Products() {
                 />
             </div>
             <Popup show={showUtlizationPopup} handleClose={() => setShowUtlizationPopup(false)} size="md" modalHeader="Add Utilization Quantity" modalBody={modalBody()} customTitle='modalTitle' modalFooter={false} />
-            <Popup show={showPoModal} handleClose={() => { setShowPoModal(false); setPreviewErrorMsg('') }} size="lg" modalHeader="Generate Purchase Order" modalBody={modalBodyPurchaseOrder()} customTitle='modalTitle' modalFooter={false} />
-            <Popup show={showUsageHistory} handleClose={() => setShowUsageHistory(false)} size="md" modalHeader="Utilization Overview" customTitle='customTitle modalTitle' modalBody={modalBodyUsageHistory()} modalFooter={false} />
+            <Popup show={showPoModal} handleClose={() => { setShowPoModal(false); setPreviewErrorMsg('');setSelectedInventoryIds([]);setIsAllSelected(false) }} size="lg" modalHeader="Generate Purchase Order" modalBody={modalBodyPurchaseOrder()} customTitle='modalTitle' modalFooter={false} />
+            <Popup show={showUsageHistory} handleClose={() => setShowUsageHistory(false)} size="lg" modalHeader="Inventory Utilization and Purchase Order" customTitle='customTitle modalTitle' modalBody={modalBodyUsageHistory()} modalFooter={false} />
         </>
     )
 }

@@ -5,6 +5,7 @@ import Products from '../pages/Products/Products';
 import Vendors from '../pages/Vendors/Vendors';
 import AddEditProduct from '../pages/Products/AddEditProduct';
 import AddEditVendor from '../pages/Vendors/AddEditVendor';
+import AllPurchaseOrders from '../pages/Purchase-orders/AllPurchaseOrders';
 
 export default function AppRoutes() {
     return (
@@ -15,7 +16,8 @@ export default function AppRoutes() {
                     <Route path='/inventory' element={<Products />} />
                     <Route path='/add-update-inventory' element={<AddEditProduct />} />
                     <Route path='/vendors' element={<Vendors />} />
-                    <Route path='/add-update-vendor' element={<AddEditVendor />} />                   
+                    <Route path='/add-update-vendor' element={<AddEditVendor />} />
+                    <Route path='/purchase-orders' element={<AllPurchaseOrders />} />                   
                 </Route>
             </Routes>
         </Router>

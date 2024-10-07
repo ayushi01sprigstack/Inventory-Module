@@ -19,6 +19,9 @@
 .font-14 {
   font-size: 14px;
 }
+.font-16{
+  font-size: 16px;
+}
 .custom-label {
   background: #03053d;
   color: white;
@@ -155,6 +158,10 @@ input[type="checkbox"] {
   color: white;
   font-weight: 500;
   border-width: 0;
+  font-size: 15px;
+}
+.utilizationTable table tbody td{
+  font-size: 14px;
 }
 .customTitle {
   color: #03053d;
@@ -236,4 +243,11 @@ input[type="checkbox"] {
   font-size: 14px;
   background: none;
   font-weight: 500;
+}
+.nav-tabs .nav-link.active {
+  color: white;
+  background-color: #050854;
+}
+.inventoryDetailsPopupWrapper .nav-link{
+  color: black;
 }
