@@ -251,6 +251,8 @@ export default function AllPurchaseOrders() {
                         setLoading(false);
                         setShowReceivePoModal(false);
                         setShowAlerts(<AlertComp show={false} />);
+                        setSelectedPoIds([]);
+                        setIsAllSelected(false);
                         getAllPurchaseOrders(inventoryParamters?.searchkey || null, inventoryParamters?.sortKey || null)
                     }, 2500);
                 }
@@ -288,12 +290,12 @@ export default function AllPurchaseOrders() {
                     <thead>
                         <tr>
                             <th><input type="checkbox" className='cursor-pointer' onChange={handleSelectAll} checked={isAllSelected} /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('id')}>PO Number <img src={Images.sortIcon} alt="sort-icon" className='ms-2' /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('status')}>Status<img src={Images.sortIcon} alt="sort-icon" className='ms-2' /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('id')}>PO Number <img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort PO Number"/></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('status')}>Status<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Status"/></th>
                             <th scope="col" className=''>Vendor</th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('total_amount')}>Total Amount<img src={Images.sortIcon} alt="sort-icon" className='ms-2' /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('created_at')}>Ordered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('delivery_date')}>Delivered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('total_amount')}>Total Amount<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Total Amount"/></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('created_at')}>Ordered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Ordered Date"/></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('delivery_date')}>Delivered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Delivered Date"/></th>
                             <th scope="col" className=''>Action</th>
                         </tr>
                     </thead>

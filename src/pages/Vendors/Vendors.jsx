@@ -120,11 +120,11 @@ export default function Vendors() {
         <table className="table table-responsive mt-2">
           <thead>
             <tr>
-              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')}>Vendor<img src={Images.sortIcon} alt="sort-icon" className='ms-2'/></th>
-              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('email')}>Email<img src={Images.sortIcon} alt="sort-icon" className='ms-2'/></th>
-              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('company_name')}>Company Name<img src={Images.sortIcon} alt="sort-icon" className='ms-2'/></th>
-              <th scope="col">Contact Number</th>
-              <th scope="col">Item Name</th>
+              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')}>Vendor<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Vendor"/></th>
+              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('email')}>Email<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Email"/></th>
+              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('company_name')}>Company<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title='Sort Company'/></th>
+              <th scope="col">Contact</th>
+              <th scope="col">Inventory</th>
               <th scope="col">Action</th>
             </tr>
           </thead>

@@ -141,7 +141,7 @@ export default function AddEditVendor() {
                                     </div>
                                     <div className='mt-2 text-end'>
                                         <button className='cancelBtn me-3' onClick={() => navigate('/vendors')}>Cancel</button>
-                                        <button type="submit" className='saveBtn'>Save</button>
+                                        <button type="submit" className='saveBtn'>{vendorId ? 'Update' : 'Save'}</button>
                                     </div>
                                 </Form>
                             )}
