@@ -68,6 +68,7 @@ export default function Products() {
         getAllProducts(inventoryParamters.searchkey || null, inventoryParamters.sortKey || null);
     }, [currentPage])
 
+
     const getAllProducts = async (searchkey, sortkey) => {
         typewatch(async function () {
             setLoading(true);
@@ -272,15 +273,15 @@ export default function Products() {
             setPreviewErrorMsg('Please select vendor.')
         }
     }
+    const getCommonVendorId = () => {
+        const vendorIds = selectedInventoryIds.map(id => {
+            const inventory = products.find(inv => inv.id == id);
+            return inventory?.inventory_detail?.vendor_id;
+        });
+        const uniqueVendorIds = [...new Set(vendorIds)];
+        return uniqueVendorIds.length == 1 ? uniqueVendorIds[0] : '';
+    };
     const modalBodyPurchaseOrder = () => {
-        const getCommonVendorId = () => {
-            const vendorIds = selectedInventoryIds.map(id => {
-                const inventory = products.find(inv => inv.id === id);
-                return inventory?.inventory_detail?.vendor_id; 
-            });
-            const uniqueVendorIds = [...new Set(vendorIds)];
-            return uniqueVendorIds.length === 1 ? uniqueVendorIds[0] : ''; 
-        };
         return (
             <>
                 {!previewPo && <h5 className='modalBodyHeading'>Vendor Information :</h5>}
@@ -505,7 +506,7 @@ export default function Products() {
                             )}
                             <div className='text-center mt-2'>
                                 <button type='submit' className='submitBtn'>Submit</button>
-                                <button className='cancelBtn ms-3 rounded-2' type="button" onClick={() => { setShowPoModal(false); setPreviewPo(false); setPreviewErrorMsg('');setFieldValue("selectedVendor",'') }}>Cancel</button>
+                                <button className='cancelBtn ms-3 rounded-2' type="button" onClick={() => { setShowPoModal(false); setPreviewPo(false); setPreviewErrorMsg(''); setFieldValue("selectedVendor", '') }}>Cancel</button>
                             </div>
                         </Form>
                     )}
@@ -696,6 +697,8 @@ export default function Products() {
                         }
                         <br />
                         <span className='redText'>*Low stock quantity. Please reorder</span>
+                        <br />
+                        <span className='font-14' style={{color:'#79E07D'}}><img src={Images.greenCircle} alt="active" className='me-2' style={{ height: '14px' }}  />Purchase order is active on this inventory</span>
                     </div>
                 </div>
             </div>
@@ -732,6 +735,9 @@ export default function Products() {
                                         <img src={Images.poIcon} alt="po-icon" className='cursor-pointer' title="Generate PO" style={{ height: '20px' }}
                                             onClick={() => { setShowPoModal(true); getInventoryDataById(product?.id); getVendors(); setPreviewPo(false); setPreviewErrorMsg('') }}
                                         />
+                                        {product?.hasActivePurchaseOrderFlag == 1 &&
+                                            <img src={Images.greenCircle} alt="active" className='ms-2' style={{ height: '14px' }} title="Active po" />
+                                        }
                                         {/* <button className='poButton'  onClick={() => { setShowPoModal(true); getInventoryDataById(product?.id); setPreviewPo(false); setPreviewErrorMsg('') }}>Generate PO</button> */}
                                     </td>
                                 </tr>
@@ -756,7 +762,7 @@ export default function Products() {
                 />
             </div>
             <Popup show={showUtlizationPopup} handleClose={() => setShowUtlizationPopup(false)} size="md" modalHeader="Add Utilization Quantity" modalBody={modalBody()} customTitle='modalTitle' modalFooter={false} />
-            <Popup show={showPoModal} handleClose={() => { setShowPoModal(false); setPreviewErrorMsg('');setSelectedInventoryIds([]);setIsAllSelected(false) }} size="lg" modalHeader="Generate Purchase Order" modalBody={modalBodyPurchaseOrder()} customTitle='modalTitle' modalFooter={false} />
+            <Popup show={showPoModal} handleClose={() => { setShowPoModal(false); setPreviewErrorMsg(''); setSelectedInventoryIds([]); setIsAllSelected(false) }} size="lg" modalHeader="Generate Purchase Order" modalBody={modalBodyPurchaseOrder()} customTitle='modalTitle' modalFooter={false} />
             <Popup show={showUsageHistory} handleClose={() => setShowUsageHistory(false)} size="lg" modalHeader="Inventory Utilization and Purchase Order" customTitle='customTitle modalTitle' modalBody={modalBodyUsageHistory()} modalFooter={false} />
         </>
     )

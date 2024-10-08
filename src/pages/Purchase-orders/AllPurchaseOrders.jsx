@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
 import ShowLoader from '../../components/loader/ShowLoader';
 import HideLoader from '../../components/loader/HideLoader';
 import DynamicSearchComp from '../../components/DynamicSearchComp';
@@ -40,7 +40,8 @@ export default function AllPurchaseOrders() {
         vendorName: '',
         totalAmount: '',
         orderedDate: '',
-        purchaseOrderInventories: []
+        purchaseOrderInventories: [],
+        orderNote:''
     })
     const [isEditingQuantity, setIsEditingQuantity] = useState(null);
     const { getAPI, postAPI } = useApiService();
@@ -95,7 +96,8 @@ export default function AllPurchaseOrders() {
                     vendorName: responseRs?.vendor?.name,
                     totalAmount: responseRs?.total_amount,
                     orderedDate: responseRs?.created_at,
-                    purchaseOrderInventories: responseRs?.purchase_inventories
+                    purchaseOrderInventories: responseRs?.purchase_inventories,
+                    orderNote:responseRs?.order_note
                 }))
                 setLoading(false);
             }
@@ -145,6 +147,7 @@ export default function AllPurchaseOrders() {
                     </div>
                     <Formik
                         initialValues={{
+                            notes:poDetailsById?.orderNote || '',
                             quantities: poDetailsById?.purchaseOrderInventories.reduce((acc, inventory) => {
                                 acc[inventory.id] = (inventory?.ordered_quantity) - (inventory?.current_received_quantity);
                                 return acc;
@@ -152,7 +155,7 @@ export default function AllPurchaseOrders() {
                         }}
                         validationSchema={ReceivePoValidationSchema} enableReinitialize={true} onSubmit={saveReceivedPO}
                     >
-                        {({ setFieldValue, values, validateForm }) => (
+                        {({ setFieldValue, values, errors, touched, validateForm }) => (
                             <Form className='' onKeyDown={(e) => {
                                 if (e.key == 'Enter') {
                                     e.preventDefault();
@@ -178,18 +181,23 @@ export default function AllPurchaseOrders() {
                                                         <td>{inventory?.current_received_quantity}</td>
                                                         <td className='position-relative'>
                                                             {isEditingQuantity === inventory.id ? (
-                                                                <Field
-                                                                    name={`quantities.${inventory.id}`}
-                                                                    type="number"
-                                                                    value={values.quantities[inventory.id] || ''}
-                                                                    onChange={(e) => setFieldValue(`quantities.${inventory.id}`, e.target.value)}
-                                                                    className='form-control position-absolute start-0 top-0'
-                                                                    min={0}
-                                                                    onBlur={() => setIsEditingQuantity(null)}
-                                                                    autoFocus
-                                                                />
+                                                                <>
+                                                                    <Field
+                                                                        name={`quantities.${inventory.id}`}
+                                                                        type="number"
+                                                                        value={values.quantities[inventory.id] || ''}
+                                                                        onChange={(e) => setFieldValue(`quantities.${inventory.id}`, e.target.value)}
+                                                                        className='form-control position-absolute start-0 top-0'
+                                                                        // className={`form-control ${touched.quantities && errors.quantities?.[inventory.id] ? 'is-invalid' : ''}`}
+                                                                        min={0}
+                                                                        onBlur={() => setIsEditingQuantity(null)}
+                                                                        autoFocus
+                                                                    />
+
+                                                                </>
+
                                                             ) : (
-                                                                <span>{values.quantities[inventory.id]}</span>
+                                                                <span onClick={() => setIsEditingQuantity(inventory.id)}>{values.quantities[inventory.id]}</span>
                                                             )}
                                                         </td>
                                                         <td className=''>
@@ -204,13 +212,14 @@ export default function AllPurchaseOrders() {
                                             )}
                                         </tbody>
                                     </table>
-                                    <div className="col-md-12">
-
-                                    </div>
-                                    <div className="text-end">
-                                        <button type='submit' className='submitBtn'>Submit</button>
-                                        <button className='cancelBtn ms-3 rounded-2' type="button" onClick={() => { setShowReceivePoModal(false) }}>Cancel</button>
-                                    </div>
+                                </div>
+                                <div className="col-md-6 position-relative">
+                                <label className='font-14'>Notes: </label>
+                                <Field as="textarea" className="form-control font-14" name='notes' autoComplete='off' rows="2" />
+                                </div>
+                                <div className="text-end mt-3">
+                                    <button type='submit' className='submitBtn'>Submit</button>
+                                    <button className='cancelBtn ms-3 rounded-2' type="button" onClick={() => { setShowReceivePoModal(false) }}>Cancel</button>
                                 </div>
                             </Form>
                         )}
@@ -224,6 +233,7 @@ export default function AllPurchaseOrders() {
         setLoading(true);
         var raw = JSON.stringify({
             poId: poDetailsById?.poNumber,
+            note:values?.notes,
             orderItemDetails: poDetailsById?.purchaseOrderInventories.map((inventory) => ({
                 itemId: inventory.id,
                 itemQuantity: values.quantities[inventory.id] || 0
@@ -236,11 +246,11 @@ export default function AllPurchaseOrders() {
             } else {
                 const responseRs = JSON.parse(result);
                 if (responseRs.status == 'success') {
-                    setShowAlerts(<AlertComp show={true} variant="success" message='Purchase Order received quantity updated successfully' />);
+                    setShowAlerts(<AlertComp show={true} variant="success" message='Received quantity updated successfully' />);
                     setTimeout(() => {
                         setLoading(false);
                         setShowReceivePoModal(false);
-                        setShowAlerts(<AlertComp show={false} />);                       
+                        setShowAlerts(<AlertComp show={false} />);
                         getAllPurchaseOrders(inventoryParamters?.searchkey || null, inventoryParamters?.sortKey || null)
                     }, 2500);
                 }
