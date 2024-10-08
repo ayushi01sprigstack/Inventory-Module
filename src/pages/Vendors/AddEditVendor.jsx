@@ -12,7 +12,8 @@ export default function AddEditVendor() {
         email: '',
         companyName: '',
         contactNum: '',
-        address: ''
+        address: '',
+        inventories:[]
     });
     const [loading, setLoading] = useState(false);
     const [showAlerts, setShowAlerts] = useState(false);
@@ -41,6 +42,7 @@ export default function AddEditVendor() {
                         companyName: responseRs?.company_name || '',
                         contactNum: responseRs?.contact_num || '',
                         address: responseRs?.address || '',
+                        inventories:responseRs?.inventory_details
                     }))
                     setLoading(false);
                 }
@@ -138,6 +140,11 @@ export default function AddEditVendor() {
                                             <Field as="textarea" className="customInput" name='address' autoComplete='off' rows="4" />
                                             <ErrorMessage name='address' component="div" className="text-start errorText" />
                                         </div>
+                                        {vendorId && 
+                                        <div className='text-white fw-semibold'>Inventories: &nbsp;<span className='fw-normal'>{vendorDetails?.inventories.length > 0 ?
+                                            vendorDetails?.inventories.map((inventory) => inventory?.inventory?.name).join(', ') : '-'}</span>
+                                        </div>
+                                        }
                                     </div>
                                     <div className='mt-2 text-end'>
                                         <button className='cancelBtn me-3' onClick={() => navigate('/vendors')}>Cancel</button>

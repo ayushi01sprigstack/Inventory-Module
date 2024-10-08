@@ -13,6 +13,7 @@ import Popup from '../../components/Popup';
 import ReceivePoValidationSchema from './ReceivePoValidationSchema';
 import AlertComp from '../../components/AlertComp';
 import { useNavigate } from 'react-router-dom';
+import Tab from '../../components/Tab';
 
 export default function AllPurchaseOrders() {
     const [loading, setLoading] = useState(false);
@@ -41,9 +42,10 @@ export default function AllPurchaseOrders() {
         totalAmount: '',
         orderedDate: '',
         purchaseOrderInventories: [],
-        orderNote:''
+        orderNote: ''
     })
     const [isEditingQuantity, setIsEditingQuantity] = useState(null);
+    const [activeTab, setActiveTab] = useState('utilization');
     const { getAPI, postAPI } = useApiService();
     const navigate = useNavigate();
     const handlePageChange = (page) => {
@@ -97,7 +99,7 @@ export default function AllPurchaseOrders() {
                     totalAmount: responseRs?.total_amount,
                     orderedDate: responseRs?.created_at,
                     purchaseOrderInventories: responseRs?.purchase_inventories,
-                    orderNote:responseRs?.order_note
+                    orderNote: responseRs?.order_note
                 }))
                 setLoading(false);
             }
@@ -147,7 +149,7 @@ export default function AllPurchaseOrders() {
                     </div>
                     <Formik
                         initialValues={{
-                            notes:poDetailsById?.orderNote || '',
+                            notes: poDetailsById?.orderNote || '',
                             quantities: poDetailsById?.purchaseOrderInventories.reduce((acc, inventory) => {
                                 acc[inventory.id] = (inventory?.ordered_quantity) - (inventory?.current_received_quantity);
                                 return acc;
@@ -155,7 +157,7 @@ export default function AllPurchaseOrders() {
                         }}
                         validationSchema={ReceivePoValidationSchema} enableReinitialize={true} onSubmit={saveReceivedPO}
                     >
-                        {({ setFieldValue, values, errors, touched, validateForm }) => (
+                        {({ setFieldValue, values }) => (
                             <Form className='' onKeyDown={(e) => {
                                 if (e.key == 'Enter') {
                                     e.preventDefault();
@@ -188,7 +190,6 @@ export default function AllPurchaseOrders() {
                                                                         value={values.quantities[inventory.id] || ''}
                                                                         onChange={(e) => setFieldValue(`quantities.${inventory.id}`, e.target.value)}
                                                                         className='form-control position-absolute start-0 top-0'
-                                                                        // className={`form-control ${touched.quantities && errors.quantities?.[inventory.id] ? 'is-invalid' : ''}`}
                                                                         min={0}
                                                                         onBlur={() => setIsEditingQuantity(null)}
                                                                         autoFocus
@@ -214,8 +215,8 @@ export default function AllPurchaseOrders() {
                                     </table>
                                 </div>
                                 <div className="col-md-6 position-relative">
-                                <label className='font-14'>Notes: </label>
-                                <Field as="textarea" className="form-control font-14" name='notes' autoComplete='off' rows="2" />
+                                    <label className='font-14'>Notes: </label>
+                                    <Field as="textarea" className="form-control font-14" name='notes' autoComplete='off' rows="2" />
                                 </div>
                                 <div className="text-end mt-3">
                                     <button type='submit' className='submitBtn'>Submit</button>
@@ -233,7 +234,7 @@ export default function AllPurchaseOrders() {
         setLoading(true);
         var raw = JSON.stringify({
             poId: poDetailsById?.poNumber,
-            note:values?.notes,
+            note: values?.notes,
             orderItemDetails: poDetailsById?.purchaseOrderInventories.map((inventory) => ({
                 itemId: inventory.id,
                 itemQuantity: values.quantities[inventory.id] || 0
@@ -270,6 +271,9 @@ export default function AllPurchaseOrders() {
             setLoading(false);
         }
     }
+    const handleTabClick = (tabName) => {
+        setActiveTab(tabName);
+    }
     return (
         <>
             {showAlerts}
@@ -280,9 +284,10 @@ export default function AllPurchaseOrders() {
                         <img src={Images.searchIcon} alt="search-icon" className="search-icon" />
                         <DynamicSearchComp placeholders={placeholders} onChange={(e) => { setInventoryParamters({ ...inventoryParamters, searchkey: e.target.value }); getAllPurchaseOrders(e.target.value, inventoryParamters.sortKey) }} />
                     </div>
-                    <div className="col-8 text-end">
-
-                    </div>
+                    {/* <ul className="nav nav-tabs">
+                        <Tab isActive={activeTab == 'utilization'} label="Utilization history" onClick={() => handleTabClick('utilization')} col={'col-md-6'} />
+                        <Tab isActive={activeTab == 'poHistory'} label="Po history" onClick={() => handleTabClick('poHistory')} col={'col-md-6'} />
+                    </ul> */}
                 </div>
             </div>
             <div className='invnetoryTable mt-2'>
@@ -290,12 +295,12 @@ export default function AllPurchaseOrders() {
                     <thead>
                         <tr>
                             <th><input type="checkbox" className='cursor-pointer' onChange={handleSelectAll} checked={isAllSelected} /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('id')}>PO Number <img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort PO Number"/></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('status')}>Status<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Status"/></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('id')}>PO Number <img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort PO Number" /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('status')}>Status<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Status" /></th>
                             <th scope="col" className=''>Vendor</th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('total_amount')}>Total Amount<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Total Amount"/></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('created_at')}>Ordered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Ordered Date"/></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('delivery_date')}>Delivered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Delivered Date"/></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('total_amount')}>Total Amount<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Total Amount" /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('created_at')}>Ordered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Ordered Date" /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('delivery_date')}>Delivered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Delivered Date" /></th>
                             <th scope="col" className=''>Action</th>
                         </tr>
                     </thead>
