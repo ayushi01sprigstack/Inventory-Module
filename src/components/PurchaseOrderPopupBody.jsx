@@ -6,7 +6,7 @@ import useApiService from '../services/ApiService';
 import GeneratePurchaseOrder from './GeneratePurchaseOrder';
 import PreviewPo from './PreviewPo';
 
-export default function PurchaseOrderPopupBody({ previewPo, setPreviewPo, selectedInventoryIds, poDetails, setPoDetails, selectedItemsDetails, setShowAlerts, setLoading, setSelectedInventoryIds, setIsAllSelected, previewErrorMsg, setPreviewErrorMsg, allvendors, products,setShowPoModal, getAllProducts, searchKey, sortKey }) {
+export default function PurchaseOrderPopupBody({ previewPo, setPreviewPo, selectedInventoryIds, poDetails, setPoDetails, selectedItemsDetails, setShowAlerts, setLoading, setSelectedInventoryIds, setIsAllSelected, previewErrorMsg, setPreviewErrorMsg, allvendors, products, setShowPoModal, getAllProducts, searchKey, sortKey }) {
     const { postAPI } = useApiService();
     const getCommonVendorId = () => {
         const vendorIds = selectedInventoryIds.map(id => {
@@ -62,6 +62,11 @@ export default function PurchaseOrderPopupBody({ previewPo, setPreviewPo, select
                     setTimeout(() => {
                         setLoading(false);
                         setShowAlerts(<AlertComp show={false} />);
+                        setShowPoModal(false);
+                        setSelectedInventoryIds([]);
+                        setIsAllSelected(false);
+                        setPreviewErrorMsg('');
+                        setPreviewPo(false);
                     }, 2000);
                 }
             }
@@ -79,7 +84,8 @@ export default function PurchaseOrderPopupBody({ previewPo, setPreviewPo, select
                 selectedVendor: selectedInventoryIds.length > 1 ? getCommonVendorId() : poDetails?.vendorID || '',
                 quantity: '',
                 quantities: {}
-            }} validationSchema={GeneratePoValidationSchema} enableReinitialize={true} onSubmit={saveGeneratePO} >
+            }} validationSchema={GeneratePoValidationSchema} enableReinitialize={true} onSubmit={saveGeneratePO} validateOnBlur={false}
+                validateOnChange={false}>
                 {({ setFieldValue, values, validateForm }) => (
                     <Form className='' onKeyDown={(e) => {
                         if (e.key == 'Enter') {
@@ -87,10 +93,10 @@ export default function PurchaseOrderPopupBody({ previewPo, setPreviewPo, select
                         }
                     }}>
                         {!previewPo && (
-                            <GeneratePurchaseOrder values={values} setFieldValue={setFieldValue} poDetails={poDetails} allvendors={allvendors} setPoDetails={setPoDetails} selectedItemsDetails={selectedItemsDetails} selectedInventoryIds={selectedInventoryIds} validateForm={validateForm} previewErrorMsg={previewErrorMsg} setPreviewErrorMsg={setPreviewErrorMsg} setPreviewPo={setPreviewPo} previewPo={previewPo}/>
+                            <GeneratePurchaseOrder values={values} setFieldValue={setFieldValue} poDetails={poDetails} allvendors={allvendors} setPoDetails={setPoDetails} selectedItemsDetails={selectedItemsDetails} selectedInventoryIds={selectedInventoryIds} validateForm={validateForm} previewErrorMsg={previewErrorMsg} setPreviewErrorMsg={setPreviewErrorMsg} setPreviewPo={setPreviewPo} previewPo={previewPo} />
                         )}
                         {previewPo && (
-                           <PreviewPo poDetails={poDetails} values={values} selectedInventoryIds={selectedInventoryIds} selectedItemsDetails={selectedItemsDetails} setPreviewPo={setPreviewPo}/>
+                            <PreviewPo poDetails={poDetails} values={values} selectedInventoryIds={selectedInventoryIds} selectedItemsDetails={selectedItemsDetails} setPreviewPo={setPreviewPo} />
                         )}
                         <div className='text-center mt-2'>
                             <button type='submit' className='submitBtn'>Submit</button>

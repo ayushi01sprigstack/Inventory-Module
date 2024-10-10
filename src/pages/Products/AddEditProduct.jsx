@@ -160,7 +160,7 @@ export default function AddEditProduct() {
                         <div className='text-center'>
                             <h4 className='heading pt-2'>{productId ? 'Edit Inventory' : 'Add Inventory'}</h4>
                         </div>
-                        <Formik initialValues={{ selectedCategory: productDetails?.selectedCategory, productName: productDetails?.productName, quantity: productDetails?.quantity, minQuantity: productDetails?.minQuantity, price: productDetails?.price, description: productDetails?.description, selectedVendor: productDetails?.selectedVendor }} validationSchema={ProductValidationSchema} enableReinitialize={true} onSubmit={submitProductDetails} >
+                        <Formik initialValues={{ selectedCategory: productDetails?.selectedCategory, productName: productDetails?.productName, quantity: productDetails?.quantity, minQuantity: productDetails?.minQuantity, price: productDetails?.price, description: productDetails?.description, selectedVendor: productDetails?.selectedVendor }} validationSchema={ProductValidationSchema} enableReinitialize={true} onSubmit={submitProductDetails} validateOnBlur={false} validateOnChange={false}>
                             {() => (
                                 <Form className='pt-4 mt-2' onKeyDown={(e) => {
                                     if (e.key == 'Enter') {

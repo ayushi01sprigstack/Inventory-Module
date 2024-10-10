@@ -87,9 +87,9 @@ export default function GeneratePurchaseOrder({ values, setFieldValue, poDetails
                                                 className="form-control position-absolute start-0 top-0"
                                                 min={0}
                                             />
-                                        ) : (
+                                         ) : (
                                             <span onClick={() => setIsEditingQuantity(item.id)}>{values.quantities[item.id] || 0}</span>
-                                        )}
+                                        )} 
                                     </td>
                                     <td>Rs. {item.price}</td>
                                     <td>Rs. {(item.price * (values.quantities[item.id] || 0)).toFixed(2)}</td>
@@ -116,9 +116,9 @@ export default function GeneratePurchaseOrder({ values, setFieldValue, poDetails
                                             className="form-control position-absolute start-0 top-0"
                                             min={0}
                                         />
-                                    ) : (
+                                     ) : (
                                         <span onClick={() => setIsEditingQuantity(true)}> {values.quantity || 0}</span>
-                                    )}
+                                    )} 
                                 </td>
                                 <td>Rs. {poDetails?.price}</td>
                                 <td>Rs. {(poDetails?.price * values.quantity).toFixed(2)}</td>

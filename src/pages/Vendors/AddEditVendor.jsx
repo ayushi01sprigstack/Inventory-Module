@@ -104,7 +104,7 @@ export default function AddEditVendor() {
                         <div className='text-center'>
                             <h4 className='heading pt-2'>{vendorId ? 'Edit Vendor' : 'Add Vendor'}</h4>
                         </div>
-                        <Formik initialValues={{ vendorName: vendorDetails?.vendorName, email: vendorDetails?.email, companyName: vendorDetails?.companyName, contactNum: vendorDetails?.contactNum, address: vendorDetails?.address }} validationSchema={VendorValidationSchema} enableReinitialize={true} onSubmit={submitVendorDetails} >
+                        <Formik initialValues={{ vendorName: vendorDetails?.vendorName, email: vendorDetails?.email, companyName: vendorDetails?.companyName, contactNum: vendorDetails?.contactNum, address: vendorDetails?.address }} validationSchema={VendorValidationSchema} enableReinitialize={true} onSubmit={submitVendorDetails} validateOnBlur={false} validateOnChange={false}>
                             {() => (
                                 <Form className='pt-4 mt-2' onKeyDown={(e) => {
                                     if (e.key == 'Enter') {

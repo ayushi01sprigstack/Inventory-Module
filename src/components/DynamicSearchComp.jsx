@@ -12,12 +12,6 @@ export default function DynamicSearchComp({ placeholders, onChange, ...rest }) {
     }, [placeholders]);
 
     return (
-        <input
-            type="text"
-            className="searchInput"
-            placeholder={placeholder}
-            onChange={onChange}
-            {...rest}
-        />
+        <input type="text" className="searchInput" placeholder={placeholder} onChange={onChange} {...rest}/>
     )
 }

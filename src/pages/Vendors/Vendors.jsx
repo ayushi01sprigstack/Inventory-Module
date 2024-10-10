@@ -21,7 +21,7 @@ export default function Vendors() {
   const [vendors, setVendors] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const placeholders = [
     'Search by Vendor Name',
     'Search by Item Name',
@@ -33,20 +33,15 @@ export default function Vendors() {
     sortByFlag: 'desc'
   })
   useEffect(() => {
-    getAllVendors(vendorParamters.searchkey ? vendorParamters.searchkey : null, vendorParamters.sortKey || null);
-  }, [])
+    getAllVendors(vendorParamters.searchkey ? vendorParamters.searchkey : null, vendorParamters.sortKey || null, vendorParamters?.sortByFlag);
+  }, [currentPage, itemsPerPage])
 
-  const getAllVendors = async (searchkey, sortkey) => {
+  const getAllVendors = async (searchkey, sortkey, sortFlag) => {
     typewatch(async function () {
       setLoading(true);
       const searchKeyParam = searchkey ? searchkey : null;
-      const updatedSortByFlag = sortkey ? (vendorParamters.sortByFlag == 'desc' ? 'asc' : 'desc') : vendorParamters.sortByFlag;
-      setVendorParamters(prev => ({
-        ...prev,
-        sortByFlag: updatedSortByFlag
-      }));
       try {
-        const result = await getAPI('/get-vendors/' + searchKeyParam + "&" + sortkey + "&" + updatedSortByFlag + "&" + currentPage + "&" + itemsPerPage);
+        const result = await getAPI('/get-vendors/' + searchKeyParam + "&" + sortkey + "&" + sortFlag + "&" + currentPage + "&" + itemsPerPage);
         if (!result || result == '') {
           alert('Something went wrong');
         }
@@ -85,10 +80,10 @@ export default function Vendors() {
             setTimeout(() => {
               setLoading(false);
               setShowAlerts(<AlertComp show={false} />);
-              getAllVendors(vendorParamters.searchkey ? vendorParamters.searchkey : null, vendorParamters.sortKey || null);
+              getAllVendors(vendorParamters.searchkey ? vendorParamters.searchkey : null, vendorParamters.sortKey || null, vendorParamters?.sortByFlag);
             }, 2500);
           }
-        } 
+        }
         catch (error) {
           console.error('Failed to delete product:', error);
           setLoading(false);
@@ -96,23 +91,42 @@ export default function Vendors() {
       }
     })
   }
-
   const handleSortClick = (item) => {
-    getAllVendors(vendorParamters.searchkey, item);
-    setVendorParamters({ ...vendorParamters, sortKey: item });
+    const newSortByFlag = vendorParamters.sortKey ? (vendorParamters.sortByFlag == 'desc' ? 'asc' : 'desc')
+      : 'desc';
+    setVendorParamters({ ...vendorParamters, sortKey: item, sortByFlag: newSortByFlag });
+    getAllVendors(vendorParamters.searchkey, item, newSortByFlag);
+  }
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   }
   return (
     <>
       {showAlerts}
       {loading ? <ShowLoader /> : <HideLoader />}
-      <div className='mt-1' style={{padding:"5px 20px"}}>
+      <div className='mt-1' style={{ padding: "5px 20px" }}>
         <div className="row align-items-center ps-3">
           <div className="col-4 p-1 position-relative">
-            <img src={Images.searchIcon} alt="search-icon" className="search-icon"/>
-            <DynamicSearchComp placeholders={placeholders} onChange={(e) => { setVendorParamters({ ...vendorParamters, searchkey: e.target.value }); getAllVendors(e.target.value, vendorParamters.sortKey) }}/>
+            <img src={Images.searchIcon} alt="search-icon" className="search-icon" />
+            <DynamicSearchComp placeholders={placeholders} onChange={(e) => { setVendorParamters({ ...vendorParamters, searchkey: e.target.value }); getAllVendors(e.target.value, vendorParamters.sortKey, vendorParamters?.sortByFlag) }} />
           </div>
           <div className="col-8 text-end">
             <button className='productBtn' onClick={() => navigate('/add-update-vendor')}> <img src={Images.addIcon} alt="addIcon" className='me-2' />Add Vendor</button>
+            <div className='deletedVendor mt-2'>*This Vendor is deleted</div>
+          </div>
+          <div className="col-md-9"></div>
+          <div className="col-md-3 row mt-2">
+            <div className="col-md-6 p-0 text-white font-14">Items per page:</div>
+            <div className='col-md-6 p-0'>
+              <select className="w-100" value={itemsPerPage} onChange={(e) => {
+                setItemsPerPage(e.target.value);
+                setCurrentPage(1);
+              }}>
+                {[10, 20, 30].map(value => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -120,9 +134,9 @@ export default function Vendors() {
         <table className="table table-responsive mt-2">
           <thead>
             <tr>
-              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')}>Vendor<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Vendor"/></th>
-              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('email')}>Email<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Email"/></th>
-              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('company_name')}>Company<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title='Sort Company'/></th>
+              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')}>Vendor<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Vendor" /></th>
+              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('email')}>Email<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Email" /></th>
+              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('company_name')}>Company<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title='Sort Company' /></th>
               <th scope="col">Contact</th>
               <th scope="col">Inventory</th>
               <th scope="col">Action</th>
@@ -131,7 +145,7 @@ export default function Vendors() {
           <tbody>
             {vendors.length > 0 ? (
               vendors.map((vendor) => (
-                <tr key={vendor?.id}>
+                <tr key={vendor?.id} className={vendor?.status == 2 ? 'deletedVendor' : ''}>
                   <td>{vendor?.name}</td>
                   <td>{vendor?.email}</td>
                   <td>{vendor?.company_name}</td>
@@ -141,8 +155,15 @@ export default function Vendors() {
                       vendor?.inventory_details.map((inventory) => inventory?.inventory?.name).join(', ') : '-'}
                   </td>
                   <td>
-                    <FontAwesomeIcon icon={faPenToSquare} className='cursor-pointer me-3' onClick={() => navigate('/add-update-vendor', { state: { vendorId: vendor?.id } })} />
-                    <FontAwesomeIcon icon={faTrash} className='cursor-pointer' onClick={() => handleDeleteVendor(vendor?.id)} />
+                    {vendor?.status == 1 ? (
+                      <>
+                        <FontAwesomeIcon icon={faPenToSquare} className='cursor-pointer me-3' onClick={() => navigate('/add-update-vendor', { state: { vendorId: vendor?.id } })} />
+                        <FontAwesomeIcon icon={faTrash} className='cursor-pointer' onClick={() => handleDeleteVendor(vendor?.id)} />
+                      </>
+                    ) : (
+                      '-'
+                    )}
+
                   </td>
                 </tr>
               ))
@@ -160,8 +181,8 @@ export default function Vendors() {
         <PaginationComp
           currentPage={currentPage}
           totalItems={totalItems}
-          pageSize={itemsPerPage}       
-          onChange={setCurrentPage}
+          pageSize={itemsPerPage}
+          onChange={handlePageChange}
         />
       </div>
     </>

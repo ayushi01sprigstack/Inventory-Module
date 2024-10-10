@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import React, { act, useEffect, useState } from 'react'
+import { faCheck, faFilePdf, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import ShowLoader from '../../components/loader/ShowLoader';
@@ -12,7 +12,6 @@ import useApiService from '../../services/ApiService';
 import Popup from '../../components/Popup';
 import ReceivePoValidationSchema from './ReceivePoValidationSchema';
 import AlertComp from '../../components/AlertComp';
-import { useNavigate } from 'react-router-dom';
 import Tab from '../../components/Tab';
 
 export default function AllPurchaseOrders() {
@@ -20,13 +19,12 @@ export default function AllPurchaseOrders() {
     const [showAlerts, setShowAlerts] = useState(false);
     const placeholders = [
         'Search by PO number',
-        'Search by Status',
         'Search by Vendor',
         'Search by Total Amount',
     ];
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 4;
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const [inventoryParamters, setInventoryParamters] = useState({
         searchkey: '',
         sortKey: null,
@@ -45,28 +43,28 @@ export default function AllPurchaseOrders() {
         orderNote: ''
     })
     const [isEditingQuantity, setIsEditingQuantity] = useState(null);
-    const [activeTab, setActiveTab] = useState('utilization');
+    const [activeTab, setActiveTab] = useState(1); //1->Pending 2->Received
     const { getAPI, postAPI } = useApiService();
-    const navigate = useNavigate();
+    var CDN_KEY = import.meta.env.VITE_CDN_KEY;
     const handlePageChange = (page) => {
         setCurrentPage(page);
     }
 
     useEffect(() => {
-        getAllPurchaseOrders(inventoryParamters.searchkey || null, inventoryParamters.sortKey || null);
-    }, [currentPage])
+        getAllPurchaseOrders(inventoryParamters.searchkey || null, inventoryParamters.sortKey || null, inventoryParamters?.sortByFlag);
+    }, [currentPage, itemsPerPage, activeTab])
 
-    const getAllPurchaseOrders = async (searchkey, sortkey) => {
+    const getAllPurchaseOrders = async (searchkey, sortkey, sortFlag) => {
         typewatch(async function () {
             setLoading(true);
             const searchKeyParam = searchkey ? searchkey : null;
-            const updatedSortByFlag = sortkey ? (inventoryParamters.sortByFlag == 'desc' ? 'asc' : 'desc') : inventoryParamters.sortByFlag;
-            setInventoryParamters(prev => ({
-                ...prev,
-                sortByFlag: updatedSortByFlag
-            }));
+            // const updatedSortByFlag = sortkey ? (inventoryParamters.sortByFlag == 'desc' ? 'asc' : 'desc') : inventoryParamters.sortByFlag;
+            // setInventoryParamters(prev => ({
+            //     ...prev,
+            //     sortByFlag: updatedSortByFlag
+            // }));
             try {
-                const result = await getAPI(`/all-purchase-orders/${searchKeyParam}&${sortkey}&${updatedSortByFlag}&${currentPage}&${itemsPerPage}`);
+                const result = await getAPI(`/all-purchase-orders/${activeTab}&${searchKeyParam}&${sortkey}&${sortFlag}&${currentPage}&${itemsPerPage}`);
                 if (!result || result == '') {
                     alert('Something went wrong');
                 }
@@ -110,8 +108,10 @@ export default function AllPurchaseOrders() {
         }
     }
     const handleSortClick = (item) => {
-        getAllPurchaseOrders(inventoryParamters.searchkey, item);
-        setInventoryParamters({ ...inventoryParamters, sortKey: item });
+        const newSortByFlag = inventoryParamters.sortKey ? (inventoryParamters.sortByFlag == 'desc' ? 'asc' : 'desc')
+            : 'desc';
+        setInventoryParamters({ ...inventoryParamters, sortKey: item, sortByFlag: newSortByFlag });
+        getAllPurchaseOrders(inventoryParamters.searchkey, item, newSortByFlag);
     }
     const handleSelectAll = (event) => {
         if (event.target.checked) {
@@ -155,7 +155,7 @@ export default function AllPurchaseOrders() {
                                 return acc;
                             }, {})
                         }}
-                        validationSchema={ReceivePoValidationSchema} enableReinitialize={true} onSubmit={saveReceivedPO}
+                        validationSchema={ReceivePoValidationSchema} enableReinitialize={true} onSubmit={saveReceivedPO} validateOnBlur={false} validateOnChange={false}
                     >
                         {({ setFieldValue, values }) => (
                             <Form className='' onKeyDown={(e) => {
@@ -182,7 +182,7 @@ export default function AllPurchaseOrders() {
                                                         <td>{inventory?.ordered_quantity}</td>
                                                         <td>{inventory?.current_received_quantity}</td>
                                                         <td className='position-relative'>
-                                                            {isEditingQuantity === inventory.id ? (
+                                                            {isEditingQuantity == inventory.id ? (
                                                                 <>
                                                                     <Field
                                                                         name={`quantities.${inventory.id}`}
@@ -254,7 +254,7 @@ export default function AllPurchaseOrders() {
                         setShowAlerts(<AlertComp show={false} />);
                         setSelectedPoIds([]);
                         setIsAllSelected(false);
-                        getAllPurchaseOrders(inventoryParamters?.searchkey || null, inventoryParamters?.sortKey || null)
+                        getAllPurchaseOrders(inventoryParamters?.searchkey || null, inventoryParamters?.sortKey || null, inventoryParamters?.sortByFlag)
                     }, 2500);
                 }
                 else {
@@ -262,6 +262,9 @@ export default function AllPurchaseOrders() {
                     setTimeout(() => {
                         setLoading(false);
                         setShowAlerts(<AlertComp show={false} />);
+                        setShowReceivePoModal(false);
+                        setSelectedPoIds([]);
+                        setIsAllSelected(false);
                     }, 2000);
                 }
             }
@@ -271,8 +274,10 @@ export default function AllPurchaseOrders() {
             setLoading(false);
         }
     }
-    const handleTabClick = (tabName) => {
-        setActiveTab(tabName);
+    const downloadPdf = (poPdf) => {
+        const link = document.createElement('a');
+        link.href = `${CDN_KEY}${poPdf}`;
+        window.open(link.href, '_blank');
     }
     return (
         <>
@@ -282,22 +287,38 @@ export default function AllPurchaseOrders() {
                 <div className="row align-items-center ps-3">
                     <div className="col-4 p-1 position-relative">
                         <img src={Images.searchIcon} alt="search-icon" className="search-icon" />
-                        <DynamicSearchComp placeholders={placeholders} onChange={(e) => { setInventoryParamters({ ...inventoryParamters, searchkey: e.target.value }); getAllPurchaseOrders(e.target.value, inventoryParamters.sortKey) }} />
+                        <DynamicSearchComp placeholders={placeholders} onChange={(e) => { setInventoryParamters({ ...inventoryParamters, searchkey: e.target.value }); getAllPurchaseOrders(e.target.value, inventoryParamters.sortKey, inventoryParamters?.sortByFlag) }} />
                     </div>
-                    {/* <ul className="nav nav-tabs">
-                        <Tab isActive={activeTab == 'utilization'} label="Utilization history" onClick={() => handleTabClick('utilization')} col={'col-md-6'} />
-                        <Tab isActive={activeTab == 'poHistory'} label="Po history" onClick={() => handleTabClick('poHistory')} col={'col-md-6'} />
-                    </ul> */}
+                    <div className="col-md-3 row mt-1 text-end">
+                        <div className="col-md-6 text-white font-14">Items per page:</div>
+                        <div className='col-md-6'>
+                            <select className="w-100" value={itemsPerPage} onChange={(e) => {
+                                setItemsPerPage(e.target.value);
+                                setCurrentPage(1);
+                            }}>
+                                {[10, 20, 30].map(value => (
+                                    <option key={value} value={value}>{value}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <div className='purchaseOrderLists '>
+                        <ul className="nav nav-tabs mt-3 custom-nav-tab">
+                            <Tab isActive={activeTab == 1} label="Pending" onClick={() => setActiveTab(1)} col={'col-md-2'} />
+                            <Tab isActive={activeTab == 2} label="Received" onClick={() => setActiveTab(2)} col={'col-md-2'} />
+                        </ul>
+                    </div>
+                    {/* <div className='text-white font-14 mt-2'>Total Selected Purchase Orders : <span className='fw-bold'>{selectedPoIds?.length}</span></div> */}
                 </div>
             </div>
             <div className='invnetoryTable mt-2'>
                 <table className="table table-responsive mt-2">
                     <thead>
                         <tr>
-                            <th><input type="checkbox" className='cursor-pointer' onChange={handleSelectAll} checked={isAllSelected} /></th>
+                            <th>{purchaseOrderDetails?.some(order => order?.status == 1) && (<input type="checkbox" className='cursor-pointer' onChange={handleSelectAll} checked={isAllSelected} />)}</th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('id')}>PO Number <img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort PO Number" /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('status')}>Status<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Status" /></th>
-                            <th scope="col" className=''>Vendor</th>
+                            <th scope="col" className=''>Status</th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('vendorName')}>Vendor<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Vendor" /></th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('total_amount')}>Total Amount<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Total Amount" /></th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('created_at')}>Ordered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Ordered Date" /></th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('delivery_date')}>Delivered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Delivered Date" /></th>
@@ -308,14 +329,17 @@ export default function AllPurchaseOrders() {
                         {purchaseOrderDetails.length > 0 ? (
                             purchaseOrderDetails.map((order) => (
                                 <tr key={order?.id}>
-                                    <td>{order?.status == 1 || order?.status == 2 ? (<input type="checkbox" className='cursor-pointer' checked={selectedPoIds.includes(order?.id)} onChange={() => handleSelectPO(order?.id)} />) : null}</td>
+                                    <td>{order?.status == 1 ? (<input type="checkbox" className='cursor-pointer' checked={selectedPoIds.includes(order?.id)} onChange={() => handleSelectPO(order?.id)} />) : null}</td>
                                     <td className='' >{order?.id}</td>
-                                    <td>{order?.status == 1 ? 'Pending' : order?.status == 2 ? 'Partially Received' : 'Received'}</td>
+                                    <td>{order?.status == 1 ? 'Pending' : 'Received'}</td>
                                     <td>{order?.vendor?.name}</td>
-                                    <td>{order?.total_amount}</td>
+                                    <td>Rs. {order?.total_amount}</td>
                                     <td>{formatDate(order?.created_at)}</td>
                                     <td>{order?.delivery_date || '-'}</td>
-                                    <td>{order?.status == 1 || order?.status == 2 ? (<FontAwesomeIcon icon={faCheck} className='cursor-pointer' title="Mark as received" style={{ height: '20px' }} onClick={() => { setShowReceivePoModal(true); getPurchaseOrderById(order?.id) }} />) : '-'}</td>
+                                    <td>
+                                        <FontAwesomeIcon icon={faFilePdf} className='cursor-pointer me-2' style={{ height: '18px' }} title="Download pdf" onClick={() => downloadPdf(order?.po_pdf)} />
+                                        {order?.status == 1 ? (<FontAwesomeIcon icon={faCheck} className='cursor-pointer' title="Receive Purchase Order" style={{ height: '18px' }} onClick={() => { setShowReceivePoModal(true); getPurchaseOrderById(order?.id) }} />) : <FontAwesomeIcon icon={faThumbsUp} title="Purchase order received" style={{ height: '20px' }} />}
+                                    </td>
                                 </tr>
                             ))
                         ) : (

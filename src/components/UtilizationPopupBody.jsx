@@ -46,7 +46,7 @@ export default function UtilizationPopupBody({ inventoryId, setShowAlerts, setLo
     }
     return (
         <>
-            <Formik initialValues={{ utilizationQty: '', date: today, purpose: '' }} validationSchema={UtilizationValidationSchema} onSubmit={saveUtilizationQuantity} >
+            <Formik initialValues={{ utilizationQty: '', date: today, purpose: '' }} validationSchema={UtilizationValidationSchema} onSubmit={saveUtilizationQuantity} validateOnBlur={false} validateOnChange={false}>
                 {() => (
                     <Form className='' onKeyDown={(e) => {
                         if (e.key == 'Enter') {
@@ -69,7 +69,7 @@ export default function UtilizationPopupBody({ inventoryId, setShowAlerts, setLo
                                 <Field as="textarea" className="form-control" name='purpose' autoComplete='off' rows="2" />
                             </div>
                         </div>
-                        <div className='text-end'>
+                        <div className='text-end mt-2'>
                             <button className='cancelBtn' onClick={() => setShowUtlizationPopup(false)}> Close</button>
                             <button className='saveBtn text-white ms-2' type="submit" style={{ background: '#303260' }}>Save</button>
                         </div>

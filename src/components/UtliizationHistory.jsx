@@ -1,9 +1,10 @@
 import React from 'react'
 
-export default function UtliizationHistory({ usageHistoryDetails, poDetails, setShowUtilizationHistory }) {
+export default function UtliizationHistory({ usageHistoryDetails, poDetails}) {
     return (
         <>
-            <p className='commonColor fw-semibold'>Item name:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetails?.inventoryName}</span></p>
+            <p className='commonColor fw-semibold mt-4'>Item name:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetails?.inventoryName}</span></p>
+            <p className='commonColor fw-semibold '>Total Quantity:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetails?.totalQuantity}</span></p>
             <p className='commonColor fw-semibold mb-2'>Usage History</p>
             <div className='utilizationTable'>
                 <table className='table table-responsive table-bordered'>
@@ -30,9 +31,6 @@ export default function UtliizationHistory({ usageHistoryDetails, poDetails, set
                         )}
                     </tbody>
                 </table>
-            </div>
-            <div className='text-end mt-3'>
-                <button className='cancelBtn' onClick={() => setShowUtilizationHistory(false)}> Close</button>
             </div>
         </>
     )
