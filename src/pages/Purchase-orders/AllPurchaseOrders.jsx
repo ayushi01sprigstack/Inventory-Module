@@ -6,7 +6,7 @@ import ShowLoader from '../../components/loader/ShowLoader';
 import HideLoader from '../../components/loader/HideLoader';
 import DynamicSearchComp from '../../components/DynamicSearchComp';
 import Images from '../../utils/Images';
-import { formatDate, typewatch } from '../../utils/js/Common';
+import { convertToBase64, formatDate, typewatch } from '../../utils/js/Common';
 import PaginationComp from '../../components/PaginationComp';
 import useApiService from '../../services/ApiService';
 import Popup from '../../components/Popup';
@@ -40,7 +40,8 @@ export default function AllPurchaseOrders() {
         totalAmount: '',
         orderedDate: '',
         purchaseOrderInventories: [],
-        orderNote: ''
+        orderNote: '',
+        pdfAttachment: null
     })
     const [isEditingQuantity, setIsEditingQuantity] = useState(null);
     const [activeTab, setActiveTab] = useState(1); //1->Pending 2->Received
@@ -142,7 +143,7 @@ export default function AllPurchaseOrders() {
                         <p className='commonColor fw-semibold font-14 mt-2 mb-2'>Vendor Name:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetailsById?.vendorName}</span></p>
                     </div>
                     <div className="col-md-6">
-                        <p className='commonColor fw-semibold font-14'>Total Amount:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetailsById?.totalAmount}</span></p>
+                        <p className='commonColor fw-semibold font-14'>Total Amount:&nbsp;&nbsp; <span className='text-black fw-normal'>Rs. {poDetailsById?.totalAmount}</span></p>
                     </div>
                     <div className="col-md-6">
                         <p className='commonColor fw-semibold font-14'>Ordered Date:&nbsp;&nbsp; <span className='text-black fw-normal'>{formatDate(poDetailsById?.orderedDate)}</span></p>
@@ -150,10 +151,11 @@ export default function AllPurchaseOrders() {
                     <Formik
                         initialValues={{
                             notes: poDetailsById?.orderNote || '',
+                            pdfAttachment: poDetailsById?.pdfAttachment || null,
                             quantities: poDetailsById?.purchaseOrderInventories.reduce((acc, inventory) => {
                                 acc[inventory.id] = (inventory?.ordered_quantity) - (inventory?.current_received_quantity);
                                 return acc;
-                            }, {})
+                            }, {}),
                         }}
                         validationSchema={ReceivePoValidationSchema} enableReinitialize={true} onSubmit={saveReceivedPO} validateOnBlur={false} validateOnChange={false}
                     >
@@ -214,9 +216,18 @@ export default function AllPurchaseOrders() {
                                         </tbody>
                                     </table>
                                 </div>
-                                <div className="col-md-6 position-relative">
-                                    <label className='font-14'>Notes: </label>
-                                    <Field as="textarea" className="form-control font-14" name='notes' autoComplete='off' rows="2" />
+                                <div className="row">
+                                    <div className="col-md-6 position-relative">
+                                        <label className='font-14'>Notes: </label>
+                                        <Field as="textarea" className="form-control font-14" name='notes' autoComplete='off' rows="1" />
+                                    </div>
+                                    <div className='col-md-6 position-relative'>
+                                        <label className='font-14'>Add Attachment:</label>
+                                        <input type="file" accept="application/pdf" className="form-control font-14"
+                                            onChange={(event) => {
+                                                setFieldValue("pdfAttachment", event.currentTarget.files[0]);
+                                            }} />
+                                    </div>
                                 </div>
                                 <div className="text-end mt-3">
                                     <button type='submit' className='submitBtn'>Submit</button>
@@ -232,9 +243,14 @@ export default function AllPurchaseOrders() {
 
     const saveReceivedPO = async (values) => {
         setLoading(true);
+        let base64file = null;
+        if(values?.pdfAttachment){
+            base64file = await convertToBase64(values?.pdfAttachment)
+        }
         var raw = JSON.stringify({
             poId: poDetailsById?.poNumber,
             note: values?.notes,
+            receipt: base64file,
             orderItemDetails: poDetailsById?.purchaseOrderInventories.map((inventory) => ({
                 itemId: inventory.id,
                 itemQuantity: values.quantities[inventory.id] || 0
