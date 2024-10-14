@@ -6,6 +6,7 @@ import Vendors from '../pages/Vendors/Vendors';
 import AddEditProduct from '../pages/Products/AddEditProduct';
 import AddEditVendor from '../pages/Vendors/AddEditVendor';
 import AllPurchaseOrders from '../pages/Purchase-orders/AllPurchaseOrders';
+import PageNotFound from '../pages/404-ErrorPage/PageNotFound.JSX';
 
 export default function AppRoutes() {
     return (
@@ -17,7 +18,8 @@ export default function AppRoutes() {
                     <Route path='/add-update-inventory' element={<AddEditProduct />} />
                     <Route path='/vendors' element={<Vendors />} />
                     <Route path='/add-update-vendor' element={<AddEditVendor />} />
-                    <Route path='/purchase-orders' element={<AllPurchaseOrders />} />                   
+                    <Route path='/purchase-orders' element={<AllPurchaseOrders />} />      
+                    <Route path="*" element={<PageNotFound />} />             
                 </Route>
             </Routes>
         </Router>

@@ -1,5 +1,5 @@
 import React, { act, useEffect, useState } from 'react'
-import { faCheck, faFilePdf, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCircleInfo, faFilePdf, faSort, faThumbsUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import ShowLoader from '../../components/loader/ShowLoader';
@@ -13,6 +13,7 @@ import Popup from '../../components/Popup';
 import ReceivePoValidationSchema from './ReceivePoValidationSchema';
 import AlertComp from '../../components/AlertComp';
 import Tab from '../../components/Tab';
+import ReceivePoHistory from './ReceivePoHistory';
 
 export default function AllPurchaseOrders() {
     const [loading, setLoading] = useState(false);
@@ -45,6 +46,8 @@ export default function AllPurchaseOrders() {
     })
     const [isEditingQuantity, setIsEditingQuantity] = useState(null);
     const [activeTab, setActiveTab] = useState(1); //1->Pending 2->Received
+    const [showReceivePoHistory, setShowReceivePoHistory] = useState(false);
+    const [purchaseOrderReceiveHistory, setPurchaseOrderReceiveHistory] = useState([]);
     const { getAPI, postAPI } = useApiService();
     var CDN_KEY = import.meta.env.VITE_CDN_KEY;
     const handlePageChange = (page) => {
@@ -98,7 +101,8 @@ export default function AllPurchaseOrders() {
                     totalAmount: responseRs?.total_amount,
                     orderedDate: responseRs?.created_at,
                     purchaseOrderInventories: responseRs?.purchase_inventories,
-                    orderNote: responseRs?.order_note
+                    orderNote: responseRs?.order_note,
+                    pdfAttachment: responseRs?.receipt,
                 }))
                 setLoading(false);
             }
@@ -108,6 +112,24 @@ export default function AllPurchaseOrders() {
             setLoading(false);
         }
     }
+    const getPoReceiveHistoryById = async (orderId) => {
+        try {
+            const result = await getAPI(`/received-purchase-order-details/${orderId}`);
+            if (!result || result == '') {
+                alert('Something went wrong');
+            }
+            else {
+                const responseRs = JSON.parse(result);
+                setPurchaseOrderReceiveHistory(responseRs);
+                setLoading(false);
+            }
+        }
+        catch (error) {
+            console.error(error);
+            setLoading(false);
+        }
+    }
+
     const handleSortClick = (item) => {
         const newSortByFlag = inventoryParamters.sortKey ? (inventoryParamters.sortByFlag == 'desc' ? 'asc' : 'desc')
             : 'desc';
@@ -152,6 +174,7 @@ export default function AllPurchaseOrders() {
                         initialValues={{
                             notes: poDetailsById?.orderNote || '',
                             pdfAttachment: poDetailsById?.pdfAttachment || null,
+                            pdfFileName: poDetailsById?.pdfAttachment ? (typeof poDetailsById?.pdfAttachment == 'string' ? poDetailsById?.pdfAttachment.split('/').pop() : poDetailsById?.pdfAttachment.name) : '',
                             quantities: poDetailsById?.purchaseOrderInventories.reduce((acc, inventory) => {
                                 acc[inventory.id] = (inventory?.ordered_quantity) - (inventory?.current_received_quantity);
                                 return acc;
@@ -159,92 +182,112 @@ export default function AllPurchaseOrders() {
                         }}
                         validationSchema={ReceivePoValidationSchema} enableReinitialize={true} onSubmit={saveReceivedPO} validateOnBlur={false} validateOnChange={false}
                     >
-                        {({ setFieldValue, values }) => (
-                            <Form className='' onKeyDown={(e) => {
-                                if (e.key == 'Enter') {
-                                    e.preventDefault();
-                                }
-                            }}>
-                                <div className='utilizationTable'>
-                                    <table className='table table-responsive table-bordered'>
-                                        <thead>
-                                            <tr>
-                                                <th scope="col" className=''>Item Name</th>
-                                                <th scope="col" className=''>Ordered Qty</th>
-                                                <th scope="col" className=''>Previous Received Qty</th>
-                                                <th scope="col" className=''>New Received Qty</th>
-                                                <th scope="col" >Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {poDetailsById?.purchaseOrderInventories.length != 0 ? (
-                                                poDetailsById?.purchaseOrderInventories.map((inventory) => (
-                                                    <tr key={inventory.id}>
-                                                        <td>{inventory?.inventory?.name}</td>
-                                                        <td>{inventory?.ordered_quantity}</td>
-                                                        <td>{inventory?.current_received_quantity}</td>
-                                                        <td className='position-relative'>
-                                                            {isEditingQuantity == inventory.id ? (
-                                                                <>
-                                                                    <Field
-                                                                        name={`quantities.${inventory.id}`}
-                                                                        type="number"
-                                                                        value={values.quantities[inventory.id] || ''}
-                                                                        onChange={(e) => setFieldValue(`quantities.${inventory.id}`, e.target.value)}
-                                                                        className='form-control position-absolute start-0 top-0'
-                                                                        min={0}
-                                                                        onBlur={() => setIsEditingQuantity(null)}
-                                                                        autoFocus
-                                                                    />
-
-                                                                </>
-
-                                                            ) : (
-                                                                <span onClick={() => setIsEditingQuantity(inventory.id)}>{values.quantities[inventory.id]}</span>
-                                                            )}
-                                                        </td>
-                                                        <td className=''>
-                                                            {inventory?.current_received_quantity != inventory?.ordered_quantity ? <img src={Images.editIconBlack} className='cursor-pointer' alt="edit" style={{ height: '15px' }} title="Edit quantity" onClick={() => setIsEditingQuantity(inventory.id)} /> : '-'}
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                            ) : (
+                        {({ setFieldValue, values }) => {
+                            const pdfUrl = poDetailsById?.pdfAttachment || null;
+                            return (
+                                <Form className='' onKeyDown={(e) => {
+                                    if (e.key == 'Enter') {
+                                        e.preventDefault();
+                                    }
+                                }}>
+                                    <div className='utilizationTable'>
+                                        <table className='table table-responsive table-bordered'>
+                                            <thead>
                                                 <tr>
-                                                    <td colSpan="4" className="text-center">No records found</td>
+                                                    <th scope="col" className=''>Item Name</th>
+                                                    <th scope="col" className=''>Ordered Qty</th>
+                                                    <th scope="col" className=''>Previous Received Qty</th>
+                                                    <th scope="col" className=''>New Received Qty</th>
+                                                    <th scope="col" >Action</th>
                                                 </tr>
+                                            </thead>
+                                            <tbody>
+                                                {poDetailsById?.purchaseOrderInventories.length != 0 ? (
+                                                    poDetailsById?.purchaseOrderInventories.map((inventory) => (
+                                                        <tr key={inventory.id}>
+                                                            <td>{inventory?.inventory?.name}</td>
+                                                            <td>{inventory?.ordered_quantity}</td>
+                                                            <td>{inventory?.current_received_quantity}</td>
+                                                            <td className='position-relative'>
+                                                                {isEditingQuantity == inventory.id ? (
+                                                                    <>
+                                                                        <Field
+                                                                            name={`quantities.${inventory.id}`}
+                                                                            type="number"
+                                                                            value={values.quantities[inventory.id] || ''}
+                                                                            onChange={(e) => setFieldValue(`quantities.${inventory.id}`, e.target.value)}
+                                                                            className='form-control position-absolute start-0 top-0'
+                                                                            min={0}
+                                                                            onBlur={() => setIsEditingQuantity(null)}
+                                                                            autoFocus
+                                                                        />
+
+                                                                    </>
+
+                                                                ) : (
+                                                                    <span onClick={() => setIsEditingQuantity(inventory.id)}>{values.quantities[inventory.id]}</span>
+                                                                )}
+                                                            </td>
+                                                            <td className=''>
+                                                                {inventory?.current_received_quantity != inventory?.ordered_quantity ? <img src={Images.editIconBlack} className='cursor-pointer' alt="edit" style={{ height: '15px' }} title="Edit quantity" onClick={() => setIsEditingQuantity(inventory.id)} /> : '-'}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="4" className="text-center">No records found</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div className="row">
+                                        <div className="col-md-6 position-relative">
+                                            <label className='font-14'>Notes: </label>
+                                            <Field as="textarea" className="form-control font-14" name='notes' autoComplete='off' rows="1" />
+                                        </div>
+                                        <div className='col-md-6 position-relative'>
+                                            <label className='font-14'>Add Attachment:</label>
+                                            <input type="file" accept="application/pdf" className="form-control font-14"
+                                                onChange={(event) => {
+                                                    setFieldValue("pdfAttachment", event.currentTarget.files[0]);
+                                                }} />
+                                            {values.pdfFileName && (
+                                                <div className="font-14 mt-1">
+                                                    <span>{values.pdfFileName}</span>
+                                                </div>
                                             )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div className="row">
-                                    <div className="col-md-6 position-relative">
-                                        <label className='font-14'>Notes: </label>
-                                        <Field as="textarea" className="form-control font-14" name='notes' autoComplete='off' rows="1" />
+                                            {pdfUrl && (
+                                                <div className="mt-1">
+                                                    <a href={`${CDN_KEY}${pdfUrl}`} className='font-14' target="_blank" rel="noopener noreferrer">
+                                                        View Pdf
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className='col-md-6 position-relative'>
-                                        <label className='font-14'>Add Attachment:</label>
-                                        <input type="file" accept="application/pdf" className="form-control font-14"
-                                            onChange={(event) => {
-                                                setFieldValue("pdfAttachment", event.currentTarget.files[0]);
-                                            }} />
+                                    <div className="text-end mt-3">
+                                        <button type='submit' className='submitBtn'>Submit</button>
+                                        <button className='cancelBtn ms-3 rounded-2' type="button" onClick={() => { setShowReceivePoModal(false) }}>Cancel</button>
                                     </div>
-                                </div>
-                                <div className="text-end mt-3">
-                                    <button type='submit' className='submitBtn'>Submit</button>
-                                    <button className='cancelBtn ms-3 rounded-2' type="button" onClick={() => { setShowReceivePoModal(false) }}>Cancel</button>
-                                </div>
-                            </Form>
-                        )}
+                                </Form>
+                            );
+                        }}
                     </Formik>
                 </div>
             </>
         )
     }
 
+    const modalBodyReceivePoHistory = () => {
+        return (
+            <ReceivePoHistory purchaseOrderReceiveHistory={purchaseOrderReceiveHistory} setShowReceivePoHistory={setShowReceivePoHistory} />
+        )
+    }
     const saveReceivedPO = async (values) => {
         setLoading(true);
         let base64file = null;
-        if(values?.pdfAttachment){
+        if (values?.pdfAttachment) {
             base64file = await convertToBase64(values?.pdfAttachment)
         }
         var raw = JSON.stringify({
@@ -318,7 +361,7 @@ export default function AllPurchaseOrders() {
                             </select>
                         </div>
                     </div>
-                    <div className='purchaseOrderLists '>
+                    <div className='purchaseOrderLists p-0'>
                         <ul className="nav nav-tabs mt-3 custom-nav-tab">
                             <Tab isActive={activeTab == 1} label="Pending" onClick={() => setActiveTab(1)} col={'col-md-2'} />
                             <Tab isActive={activeTab == 2} label="Received" onClick={() => setActiveTab(2)} col={'col-md-2'} />
@@ -331,13 +374,13 @@ export default function AllPurchaseOrders() {
                 <table className="table table-responsive mt-2">
                     <thead>
                         <tr>
-                            <th>{purchaseOrderDetails?.some(order => order?.status == 1) && (<input type="checkbox" className='cursor-pointer' onChange={handleSelectAll} checked={isAllSelected} />)}</th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('id')}>PO Number <img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort PO Number" /></th>
+                            {/* <th>{purchaseOrderDetails?.some(order => order?.status == 1) && (<input type="checkbox" className='cursor-pointer' onChange={handleSelectAll} checked={isAllSelected} />)}</th> */}
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('id')} title="Sort PO Number" >PO Number <FontAwesomeIcon icon={faSort} className='ms-2' /></th>
                             <th scope="col" className=''>Status</th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('vendorName')}>Vendor<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Vendor" /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('total_amount')}>Total Amount<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Total Amount" /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('created_at')}>Ordered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Ordered Date" /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('delivery_date')}>Delivered Date<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Delivered Date" /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('vendorName')} title="Sort Vendor">Vendor<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('total_amount')} title="Sort Total Amount">Total Amount<FontAwesomeIcon icon={faSort} className='ms-2'/></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('created_at')} title="Sort Ordered Date">Ordered Date<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('delivery_date')} title="Sort Delivered Date">Delivered Date<FontAwesomeIcon icon={faSort} className='ms-2'/></th>
                             <th scope="col" className=''>Action</th>
                         </tr>
                     </thead>
@@ -345,7 +388,7 @@ export default function AllPurchaseOrders() {
                         {purchaseOrderDetails.length > 0 ? (
                             purchaseOrderDetails.map((order) => (
                                 <tr key={order?.id}>
-                                    <td>{order?.status == 1 ? (<input type="checkbox" className='cursor-pointer' checked={selectedPoIds.includes(order?.id)} onChange={() => handleSelectPO(order?.id)} />) : null}</td>
+                                    {/* <td>{order?.status == 1 ? (<input type="checkbox" className='cursor-pointer' checked={selectedPoIds.includes(order?.id)} onChange={() => handleSelectPO(order?.id)} />) : null}</td> */}
                                     <td className='' >{order?.id}</td>
                                     <td>{order?.status == 1 ? 'Pending' : 'Received'}</td>
                                     <td>{order?.vendor?.name}</td>
@@ -354,7 +397,7 @@ export default function AllPurchaseOrders() {
                                     <td>{order?.delivery_date || '-'}</td>
                                     <td>
                                         <FontAwesomeIcon icon={faFilePdf} className='cursor-pointer me-2' style={{ height: '18px' }} title="Download pdf" onClick={() => downloadPdf(order?.po_pdf)} />
-                                        {order?.status == 1 ? (<FontAwesomeIcon icon={faCheck} className='cursor-pointer' title="Receive Purchase Order" style={{ height: '18px' }} onClick={() => { setShowReceivePoModal(true); getPurchaseOrderById(order?.id) }} />) : <FontAwesomeIcon icon={faThumbsUp} title="Purchase order received" style={{ height: '20px' }} />}
+                                        {order?.status == 1 ? (<FontAwesomeIcon icon={faCheck} className='cursor-pointer' title="Receive Purchase Order" style={{ height: '18px' }} onClick={() => { setShowReceivePoModal(true); getPurchaseOrderById(order?.id) }} />) : <FontAwesomeIcon icon={faCircleInfo} className='cursor-pointer' title="Show purchase order receive history" style={{ height: '18px' }} onClick={() => { setShowReceivePoHistory(true); getPoReceiveHistoryById(order?.id) }} />}
                                     </td>
                                 </tr>
                             ))
@@ -378,6 +421,7 @@ export default function AllPurchaseOrders() {
                 />
             </div>
             <Popup show={showReceivePoModal} handleClose={() => setShowReceivePoModal(false)} size="lg" modalHeader="Receive Purchase Order" customTitle='modalTitle' modalBody={modalBodyReceivePurchaseOrder()} modalFooter={false} />
+            <Popup show={showReceivePoHistory} handleClose={() => setShowReceivePoHistory(false)} size="lg" modalHeader="Received Purchase Order History" customTitle='modalTitle' modalBody={modalBodyReceivePoHistory()} modalFooter={false} />
         </>
     )
 }

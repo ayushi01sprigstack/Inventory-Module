@@ -4,8 +4,8 @@ import { formatDate } from '../utils/js/Common'
 export default function PoHistory({purchaseOrderHistory, poDetails}) {
     return (
         <>
-            <p className='commonColor fw-semibold mt-4'>Item name:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetails?.inventoryName}</span></p>
-            <p className='commonColor fw-semibold mb-2'>Purchase Order History</p>
+            <p className='commonColor fw-semibold mb-1 mt-3'>Item name:&nbsp;&nbsp; <span className='text-black fw-normal'>{poDetails?.inventoryName}</span></p>
+            <p className='commonColor fw-semibold mb-1'>Purchase Order History:</p>
             <div className='utilizationTable'>
                 <table className='table table-responsive table-bordered'>
                     <thead>

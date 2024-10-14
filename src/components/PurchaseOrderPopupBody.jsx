@@ -1,4 +1,4 @@
-import { ErrorMessage, Field, Formik, Form } from 'formik';
+import { Formik, Form } from 'formik';
 import React from 'react'
 import GeneratePoValidationSchema from '../pages/Products/GeneratePoValidationSchema';
 import AlertComp from './AlertComp';
@@ -86,14 +86,14 @@ export default function PurchaseOrderPopupBody({ previewPo, setPreviewPo, select
                 quantities: {}
             }} validationSchema={GeneratePoValidationSchema} enableReinitialize={true} onSubmit={saveGeneratePO} validateOnBlur={false}
                 validateOnChange={false}>
-                {({ setFieldValue, values, validateForm }) => (
+                {({ setFieldValue, values, validateForm,setFieldTouched }) => (
                     <Form className='' onKeyDown={(e) => {
                         if (e.key == 'Enter') {
                             e.preventDefault();
                         }
                     }}>
                         {!previewPo && (
-                            <GeneratePurchaseOrder values={values} setFieldValue={setFieldValue} poDetails={poDetails} allvendors={allvendors} setPoDetails={setPoDetails} selectedItemsDetails={selectedItemsDetails} selectedInventoryIds={selectedInventoryIds} validateForm={validateForm} previewErrorMsg={previewErrorMsg} setPreviewErrorMsg={setPreviewErrorMsg} setPreviewPo={setPreviewPo} previewPo={previewPo} />
+                            <GeneratePurchaseOrder values={values} setFieldValue={setFieldValue} poDetails={poDetails} allvendors={allvendors} setPoDetails={setPoDetails} selectedItemsDetails={selectedItemsDetails} selectedInventoryIds={selectedInventoryIds} validateForm={validateForm} previewErrorMsg={previewErrorMsg} setPreviewErrorMsg={setPreviewErrorMsg} setPreviewPo={setPreviewPo} previewPo={previewPo} setFieldTouched={setFieldTouched}/>
                         )}
                         {previewPo && (
                             <PreviewPo poDetails={poDetails} values={values} selectedInventoryIds={selectedInventoryIds} selectedItemsDetails={selectedItemsDetails} setPreviewPo={setPreviewPo} />

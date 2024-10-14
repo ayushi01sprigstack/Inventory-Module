@@ -12,7 +12,7 @@ import Popup from '../../components/Popup';
 import DynamicSearchComp from '../../components/DynamicSearchComp';
 import UtilizationPopupBody from '../../components/UtilizationPopupBody';
 import PurchaseOrderPopupBody from '../../components/PurchaseOrderPopupBody';
-import { faBoxOpen, faCircleInfo, faReceipt } from '@fortawesome/free-solid-svg-icons';
+import { faBoxOpen, faCircleInfo, faReceipt, faSort } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import UtilizationAndPoHistory from '../../components/UtilizationAndPoHistory';
 
@@ -268,11 +268,11 @@ export default function Products() {
                     <thead>
                         <tr>
                             <th><input type="checkbox" className='cursor-pointer' onChange={handleSelectAll} checked={isAllSelected} /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')}>Inventory <img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Inventory" /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('quantity')}>Qty<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Quantity" /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('reminder_quantity')}>Min Stock Qty<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Min Stock Qty" /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('price')}>Price<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Price" /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('vendorName')}>Vendor<img src={Images.sortIcon} alt="sort-icon" className='ms-2' title="Sort Vendor" /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')} title="Sort Inventory" >Inventory <FontAwesomeIcon icon={faSort} className='ms-2' /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('quantity')} title="Sort Quantity" >Current Qty<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('reminder_quantity')} title="Sort Min Stock Qty">Min Stock Qty<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('price')} title="Sort Price">Price<FontAwesomeIcon icon={faSort} className='ms-2'  /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('vendorName')} title="Sort Vendor">Vendor<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
                             <th scope="col" className=''>PO</th>
                             <th scope="col" className=''>Action</th>
                         </tr>

@@ -2,7 +2,7 @@ import { ErrorMessage, Field } from 'formik';
 import React, { useState } from 'react'
 import Images from '../utils/Images';
 
-export default function GeneratePurchaseOrder({ values, setFieldValue, poDetails, allvendors, setPoDetails, selectedItemsDetails, selectedInventoryIds, validateForm, previewErrorMsg, setPreviewPo, setPreviewErrorMsg, previewPo }) {
+export default function GeneratePurchaseOrder({ values, setFieldValue, poDetails, allvendors, setPoDetails, selectedItemsDetails, selectedInventoryIds, validateForm, previewErrorMsg, setPreviewPo, setPreviewErrorMsg, previewPo,setFieldTouched }) {
     const [isEditingQuantity, setIsEditingQuantity] = useState(false);
     const handlePreviewPo = async (validateForm) => {
         const formErrors = await validateForm();
@@ -87,9 +87,9 @@ export default function GeneratePurchaseOrder({ values, setFieldValue, poDetails
                                                 className="form-control position-absolute start-0 top-0"
                                                 min={0}
                                             />
-                                         ) : (
+                                        ) : (
                                             <span onClick={() => setIsEditingQuantity(item.id)}>{values.quantities[item.id] || 0}</span>
-                                        )} 
+                                        )}
                                     </td>
                                     <td>Rs. {item.price}</td>
                                     <td>Rs. {(item.price * (values.quantities[item.id] || 0)).toFixed(2)}</td>
@@ -105,20 +105,22 @@ export default function GeneratePurchaseOrder({ values, setFieldValue, poDetails
                                 <td>{poDetails?.inventoryName}</td>
                                 <td className='position-relative'>
                                     {isEditingQuantity ? (
-                                        <input
-                                            type="number"
-                                            value={values.quantity}
-                                            onChange={(e) => {
-                                                setFieldValue('quantity', e.target.value);
-                                            }}
-                                            onBlur={() => setIsEditingQuantity(false)}
-                                            autoFocus
-                                            className="form-control position-absolute start-0 top-0"
-                                            min={0}
-                                        />
-                                     ) : (
+                                        <>
+                                            <input
+                                                type="number"
+                                                value={values.quantity}
+                                                onChange={(e) => {
+                                                    setFieldValue('quantity', e.target.value);
+                                                }}
+                                                onBlur={() => { setFieldTouched('quantity', true); setIsEditingQuantity(false) }}
+                                                autoFocus
+                                                className="form-control position-absolute start-0 top-0"
+                                                min={0}
+                                            />
+                                        </>
+                                    ) : (
                                         <span onClick={() => setIsEditingQuantity(true)}> {values.quantity || 0}</span>
-                                    )} 
+                                    )}
                                 </td>
                                 <td>Rs. {poDetails?.price}</td>
                                 <td>Rs. {(poDetails?.price * values.quantity).toFixed(2)}</td>
@@ -127,6 +129,7 @@ export default function GeneratePurchaseOrder({ values, setFieldValue, poDetails
                         </tbody>
                     )}
                 </table>
+                <ErrorMessage name="quantity" component="div" className="text-danger errorText" />
                 <div className='text-end'>
                     <strong>Total Price: </strong> <span className='fw-normal'>Rs.  {selectedInventoryIds.length > 1 ? (
                         (() => {
