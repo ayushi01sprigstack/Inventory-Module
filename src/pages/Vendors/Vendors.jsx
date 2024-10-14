@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useApiService from '../../services/ApiService';
 import ShowLoader from '../../components/loader/ShowLoader';
@@ -9,9 +9,8 @@ import AlertComp from '../../components/AlertComp';
 import Swal from 'sweetalert2';
 import PaginationComp from '../../components/PaginationComp';
 import Images from '../../utils/Images';
-import { typewatch } from '../../utils/js/Common';
+import { debounce } from '../../utils/js/Common';
 import DynamicSearchComp from '../../components/DynamicSearchComp';
-
 
 export default function Vendors() {
   const navigate = useNavigate();
@@ -23,9 +22,9 @@ export default function Vendors() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const placeholders = [
-    'Search by Vendor Name',
-    'Search by Item Name',
-    'Search by Company Name',
+    'Search by Vendor',
+    'Search by Inventory',
+    'Search by Company',
   ];
   const [vendorParamters, setVendorParamters] = useState({
     searchkey: '',
@@ -36,28 +35,26 @@ export default function Vendors() {
     getAllVendors(vendorParamters.searchkey ? vendorParamters.searchkey : null, vendorParamters.sortKey || null, vendorParamters?.sortByFlag);
   }, [currentPage, itemsPerPage])
 
-  const getAllVendors = async (searchkey, sortkey, sortFlag) => {
-    typewatch(async function () {
-      setLoading(true);
-      const searchKeyParam = searchkey ? searchkey : null;
-      try {
-        const result = await getAPI('/get-vendors/' + searchKeyParam + "&" + sortkey + "&" + sortFlag + "&" + currentPage + "&" + itemsPerPage);
-        if (!result || result == '') {
-          alert('Something went wrong');
-        }
-        else {
-          const responseRs = JSON.parse(result);
-          setLoading(false);
-          setVendors(responseRs?.data);
-          setTotalItems(responseRs.total);
-        }
+  const getAllVendors = debounce(async (searchkey, sortkey, sortFlag) => {
+    setLoading(true);
+    const searchKeyParam = searchkey ? searchkey : null;
+    try {
+      const result = await getAPI(`/get-vendors/${searchKeyParam}&${sortkey}&${sortFlag}&${currentPage}&${itemsPerPage}`);
+      if (!result || result == '') {
+        throw new Error('Something went wrong');
       }
-      catch (error) {
-        console.error(error);
+      else {
+        const responseRs = JSON.parse(result);
         setLoading(false);
+        setVendors(responseRs?.data);
+        setTotalItems(responseRs.total);
       }
-    }, searchkey != null ? 1000 : 0);
-  }
+    }
+    catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
+  }, 50);
   const handleDeleteVendor = async (vendorId) => {
     Swal.fire({
       title: 'Are you sure?',
@@ -73,7 +70,7 @@ export default function Vendors() {
         try {
           const result = await postAPI(`/delete-vendor/${vendorId}`);
           if (!result || result == '') {
-            alert('Something went wrong');
+            throw new Error('Something went wrong');
           }
           else {
             setShowAlerts(<AlertComp show={true} variant="success" message="Vendor deleted successfully" />);
@@ -135,8 +132,8 @@ export default function Vendors() {
           <thead>
             <tr>
               <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')} title="Sort Vendor" >Vendor<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
-              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('email')} title="Sort Email" >Email<FontAwesomeIcon icon={faSort} className='ms-2'/></th>
-              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('company_name')} title='Sort Company' >Company<FontAwesomeIcon icon={faSort} className='ms-2'/></th>
+              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('email')} title="Sort Email" >Email<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
+              <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('company_name')} title='Sort Company' >Company<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
               <th scope="col">Contact</th>
               <th scope="col">Inventory</th>
               <th scope="col">Action</th>

@@ -6,7 +6,7 @@ import Vendors from '../pages/Vendors/Vendors';
 import AddEditProduct from '../pages/Products/AddEditProduct';
 import AddEditVendor from '../pages/Vendors/AddEditVendor';
 import AllPurchaseOrders from '../pages/Purchase-orders/AllPurchaseOrders';
-import PageNotFound from '../pages/404-ErrorPage/PageNotFound.JSX';
+import PageNotFound from '../pages/404-ErrorPage/PageNotFound';
 
 export default function AppRoutes() {
     return (

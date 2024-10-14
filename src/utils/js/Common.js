@@ -1,21 +1,19 @@
-export const typewatch = (function () {
-    var timer = 0;
-    return function (callback, ms) {
+// export const typewatch = (function () {
+//     var timer = 0;
+//     return function (callback, ms) {
+//       clearTimeout(timer);
+//       timer = setTimeout(callback, ms);
+//     };
+//   })();
+export const debounce = (callback, delay) => {
+  let timer;
+  return (...args) => {
       clearTimeout(timer);
-      timer = setTimeout(callback, ms);
+      timer = setTimeout(() => {
+      callback(...args);
+      }, delay);
     };
-  })();
-// export const debounceFunc = (func, delay) => {
-//   let timeoutId;
-//   return (...args) => {
-//       if (timeoutId) {
-//           clearTimeout(timeoutId);
-//       }
-//       timeoutId = setTimeout(() => {
-//           func.apply(null, args);
-//       }, delay);
-//   };
-// };
+};
 export const formatDate = (utcDate) => {
   if (!utcDate) return '-';
   const date = new Date(utcDate); 

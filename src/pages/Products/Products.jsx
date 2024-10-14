@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useApiService from '../../services/ApiService';
 import ShowLoader from '../../components/loader/ShowLoader';
@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import AlertComp from '../../components/AlertComp';
 import Images from '../../utils/Images';
 import PaginationComp from '../../components/PaginationComp';
-import { typewatch } from '../../utils/js/Common';
+import { debounce } from '../../utils/js/Common';
 import Popup from '../../components/Popup';
 import DynamicSearchComp from '../../components/DynamicSearchComp';
 import UtilizationPopupBody from '../../components/UtilizationPopupBody';
@@ -27,7 +27,7 @@ export default function Products() {
     ];
     const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(4);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const [inventoryParamters, setInventoryParamters] = useState({
         searchkey: '',
         sortKey: null,
@@ -66,33 +66,29 @@ export default function Products() {
         getAllProducts(inventoryParamters.searchkey || null, inventoryParamters.sortKey || null, inventoryParamters?.sortByFlag);
     }, [currentPage, itemsPerPage])
 
-    const getAllProducts = async (searchkey, sortkey, sortFlag) => {
-        typewatch(async function () {
-            setLoading(true);
-            const searchKeyParam = searchkey ? searchkey : null;
-            try {
-                const result = await getAPI(`/all-inventories/${searchKeyParam}&${sortkey}&${sortFlag}&${currentPage}&${itemsPerPage}`);
-                if (!result || result == '') {
-                    alert('Something went wrong');
-                }
-                else {
-                    const responseRs = JSON.parse(result);
-                    setLoading(false);
-                    setProducts(responseRs.data);
-                    setTotalItems(responseRs.total);
-                }
+    const getAllProducts = debounce(async (searchkey, sortkey, sortFlag) => {
+        setLoading(true);
+        const searchKeyParam = searchkey ? searchkey : null;
+        try {
+            const result = await getAPI(`/all-inventories/${searchKeyParam}&${sortkey}&${sortFlag}&${currentPage}&${itemsPerPage}`);
+            if (!result || result == '') {
+                throw new Error('Something went wrong');
             }
-            catch (error) {
-                console.error(error);
+            else {
+                const responseRs = JSON.parse(result);
                 setLoading(false);
+                setProducts(responseRs.data);
+                setTotalItems(responseRs.total);
             }
-        }, searchkey != null ? 1000 : 0);
-    }
-
+        }
+        catch (error) {
+            console.error(error);
+            setLoading(false);
+        }
+    }, 50);
     const handlePageChange = (page) => {
         setCurrentPage(page);
     }
-
     const handleDeleteProduct = async (productId) => {
         Swal.fire({
             title: 'Are you sure?',
@@ -108,7 +104,7 @@ export default function Products() {
                 try {
                     const result = await postAPI(`/delete-inventory/${productId}`);
                     if (!result || result == '') {
-                        alert('Something went wrong');
+                        throw new Error('Something went wrong');
                     }
                     else {
                         setShowAlerts(<AlertComp show={true} variant="success" message="Product deleted successfully" />);
@@ -149,13 +145,12 @@ export default function Products() {
             setSelectedInventoryIds([...selectedInventoryIds, id]);
         }
     }
-
     const getInventoryDataById = async (productId) => {
         setLoading(true);
         try {
             const result = await getAPI(`/get-inventory-details/${productId}`);
             if (!result || result == '') {
-                alert('Something went wrong');
+                throw new Error('Something went wrong');
             }
             else {
                 const responseRs = JSON.parse(result);
@@ -188,12 +183,12 @@ export default function Products() {
 
     const modalBodyAddUtilization = () => {
         return (
-            <UtilizationPopupBody inventoryId={inventoryId} setShowAlerts={setShowAlerts} setLoading={setLoading} setShowUtlizationPopup={setShowUtlizationPopup} getAllProducts={getAllProducts} searchKey={inventoryParamters?.searchkey} sortKey={inventoryParamters?.sortKey} />
+            <UtilizationPopupBody inventoryId={inventoryId} setShowAlerts={setShowAlerts} setLoading={setLoading} setShowUtlizationPopup={setShowUtlizationPopup} getAllProducts={getAllProducts} searchKey={inventoryParamters?.searchkey} sortKey={inventoryParamters?.sortKey} sortFlag={inventoryParamters?.sortByFlag} />
         )
     }
     const modalBodyPurchaseOrder = () => {
         return (
-            <PurchaseOrderPopupBody previewPo={previewPo} setPreviewPo={setPreviewPo} selectedInventoryIds={selectedInventoryIds} poDetails={poDetails} setPoDetails={setPoDetails} selectedItemsDetails={selectedItemsDetails} setShowAlerts={setShowAlerts} setLoading={setLoading} setSelectedInventoryIds={setSelectedInventoryIds} setIsAllSelected={setIsAllSelected} setPreviewErrorMsg={setPreviewErrorMsg} allvendors={allvendors} previewErrorMsg={previewErrorMsg} products={products} setShowPoModal={setShowPoModal} getAllProducts={getAllProducts} searchKey={inventoryParamters?.searchkey} sortKey={inventoryParamters?.sortKey} />
+            <PurchaseOrderPopupBody previewPo={previewPo} setPreviewPo={setPreviewPo} selectedInventoryIds={selectedInventoryIds} poDetails={poDetails} setPoDetails={setPoDetails} selectedItemsDetails={selectedItemsDetails} setShowAlerts={setShowAlerts} setLoading={setLoading} setSelectedInventoryIds={setSelectedInventoryIds} setIsAllSelected={setIsAllSelected} setPreviewErrorMsg={setPreviewErrorMsg} allvendors={allvendors} previewErrorMsg={previewErrorMsg} products={products} setShowPoModal={setShowPoModal} getAllProducts={getAllProducts} searchKey={inventoryParamters?.searchkey} sortKey={inventoryParamters?.sortKey} sortFlag={inventoryParamters?.sortByFlag} />
         )
     }
     const modalBodyInfoPopup = () => {
@@ -207,7 +202,7 @@ export default function Products() {
         try {
             const result = await getAPI('/get-vendors-data');
             if (!result || result == '') {
-                alert('Something went wrong');
+                throw new Error('Something went wrong');
             }
             else {
                 const responseRs = JSON.parse(result);
@@ -271,7 +266,7 @@ export default function Products() {
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('name')} title="Sort Inventory" >Inventory <FontAwesomeIcon icon={faSort} className='ms-2' /></th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('quantity')} title="Sort Quantity" >Current Qty<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('reminder_quantity')} title="Sort Min Stock Qty">Min Stock Qty<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
-                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('price')} title="Sort Price">Price<FontAwesomeIcon icon={faSort} className='ms-2'  /></th>
+                            <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('price')} title="Sort Price">Price<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
                             <th scope="col" className='cursor-pointer' onClick={() => handleSortClick('vendorName')} title="Sort Vendor">Vendor<FontAwesomeIcon icon={faSort} className='ms-2' /></th>
                             <th scope="col" className=''>PO</th>
                             <th scope="col" className=''>Action</th>

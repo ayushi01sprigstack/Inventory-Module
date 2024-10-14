@@ -4,7 +4,7 @@ import UtilizationValidationSchema from '../pages/Products/UtilizationValidation
 import AlertComp from './AlertComp';
 import useApiService from '../services/ApiService';
 
-export default function UtilizationPopupBody({ inventoryId, setShowAlerts, setLoading, setShowUtlizationPopup, getAllProducts, searchkey, sortKey }) {
+export default function UtilizationPopupBody({ inventoryId, setShowAlerts, setLoading, setShowUtlizationPopup, getAllProducts, searchkey, sortKey,sortFlag }) {
     const today = new Date().toISOString().split('T')[0];
     const { postAPI } = useApiService();
     const saveUtilizationQuantity = async (values) => {
@@ -19,7 +19,7 @@ export default function UtilizationPopupBody({ inventoryId, setShowAlerts, setLo
         try {
             const result = await postAPI('/add-inventory-utilization', raw);
             if (!result || result == "") {
-                alert('Something went wrong');
+                throw new Error('Something went wrong');
             } else {
                 const responseRs = JSON.parse(result);
                 if (responseRs.status == 'success') {
@@ -27,7 +27,7 @@ export default function UtilizationPopupBody({ inventoryId, setShowAlerts, setLo
                     setTimeout(() => {
                         setLoading(false);
                         setShowAlerts(<AlertComp show={false} />);
-                        getAllProducts(searchkey || null, sortKey || null);
+                        getAllProducts(searchkey || null, sortKey || null,sortFlag);
                     }, 2500);
                 }
                 else {

@@ -31,7 +31,7 @@ export default function AddEditVendor() {
             try {
                 const result = await getAPI(`/get-vendor-details/${vendorId}`);
                 if (!result || result == '') {
-                    alert('Something went wrong');
+                    throw new Error('Something went wrong');
                 }
                 else {
                     const responseRs = JSON.parse(result);
@@ -68,7 +68,7 @@ export default function AddEditVendor() {
         try {
             const result = await postAPI('/add-update-vendor', raw);
             if (!result || result == "") {
-                alert('Something went wrong');
+                throw new Error('Something went wrong');
             } else {
                 const responseRs = JSON.parse(result);
                 if (responseRs.status == 'success') {

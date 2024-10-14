@@ -19,19 +19,17 @@ const useApiService = () => {
     const handleResponse = async (response) => {
         const responseBody = await response.text();
         if (response?.status == 401) {
-            alert('Token expired. Redirecting to the login page.');
-            setTimeout(() => {
+            throw new Error('Token expired. Redirecting to the login page.');          
                 // Logout();
-            }, 2000);
         } else if (!responseBody) {
-            alert('Something went wrong');
+            throw new Error('Something went wrong');
         }
         return responseBody;
     };
 
     const handleError = (error) => {
         console.error(error);
-        return error;
+        throw error;
     };
 
     const apiRequest = useCallback(async (method, endpoint, data = null) => {

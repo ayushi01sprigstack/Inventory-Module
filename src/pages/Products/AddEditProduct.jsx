@@ -41,7 +41,7 @@ export default function AddEditProduct() {
         try {
             const result = await getAPI('/get-categories');
             if (!result || result == '') {
-                alert('Something went wrong');
+                throw new Error('Something went wrong');
             }
             else {
                 const responseRs = JSON.parse(result);
@@ -62,7 +62,7 @@ export default function AddEditProduct() {
         try {
             const result = await getAPI('/get-vendors-data');
             if (!result || result == '') {
-                alert('Something went wrong');
+                throw new Error('Something went wrong');
             }
             else {
                 const responseRs = JSON.parse(result);
@@ -84,7 +84,7 @@ export default function AddEditProduct() {
             try {
                 const result = await getAPI(`/get-inventory-details/${productId}`);
                 if (!result || result == '') {
-                    alert('Something went wrong');
+                    throw new Error('Something went wrong');
                 }
                 else {
                     const responseRs = JSON.parse(result);
@@ -125,7 +125,7 @@ export default function AddEditProduct() {
         try {
             const result = await postAPI('/add-update-inventory', raw);
             if (!result || result == "") {
-                alert('Something went wrong');
+                throw new Error('Something went wrong');
             } else {
                 const responseRs = JSON.parse(result);
                 if (responseRs.status == 'success') {

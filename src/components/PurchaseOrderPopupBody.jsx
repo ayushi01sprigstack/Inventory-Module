@@ -6,7 +6,7 @@ import useApiService from '../services/ApiService';
 import GeneratePurchaseOrder from './GeneratePurchaseOrder';
 import PreviewPo from './PreviewPo';
 
-export default function PurchaseOrderPopupBody({ previewPo, setPreviewPo, selectedInventoryIds, poDetails, setPoDetails, selectedItemsDetails, setShowAlerts, setLoading, setSelectedInventoryIds, setIsAllSelected, previewErrorMsg, setPreviewErrorMsg, allvendors, products, setShowPoModal, getAllProducts, searchKey, sortKey }) {
+export default function PurchaseOrderPopupBody({ previewPo, setPreviewPo, selectedInventoryIds, poDetails, setPoDetails, selectedItemsDetails, setShowAlerts, setLoading, setSelectedInventoryIds, setIsAllSelected, previewErrorMsg, setPreviewErrorMsg, allvendors, products, setShowPoModal, getAllProducts, searchKey, sortKey,sortFlag }) {
     const { postAPI } = useApiService();
     const getCommonVendorId = () => {
         const vendorIds = selectedInventoryIds.map(id => {
@@ -41,7 +41,7 @@ export default function PurchaseOrderPopupBody({ previewPo, setPreviewPo, select
         try {
             const result = await postAPI('/generate-purchase-order', raw);
             if (!result || result == "") {
-                alert('Something went wrong');
+                throw new Error('Something went wrong');
             } else {
                 const responseRs = JSON.parse(result);
                 if (responseRs.status == 'success') {
@@ -50,7 +50,7 @@ export default function PurchaseOrderPopupBody({ previewPo, setPreviewPo, select
                         setLoading(false);
                         setShowAlerts(<AlertComp show={false} />);
                         setShowPoModal(false);
-                        getAllProducts(searchKey || null, sortKey || null);
+                        getAllProducts(searchKey || null, sortKey || null, sortFlag);
                         setSelectedInventoryIds([]);
                         setIsAllSelected(false);
                         setPreviewErrorMsg('');
